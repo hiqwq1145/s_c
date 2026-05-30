@@ -1,408 +1,725 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>计算器</title>
-    <style>
-        * { box-sizing: border-box; user-select: none; }
-        body { 
-            background: #1e1e2f; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', system-ui;
-        }
-        .fake-calculator {
-            background: #2d2d3a;
-            border-radius: 28px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 320px;
-        }
-        .fake-screen {
-            background: #1a1a24;
-            border-radius: 16px;
-            padding: 20px 16px;
-            text-align: right;
-            font-size: 28px;
-            color: #4ade80;
-            font-family: monospace;
-            margin-bottom: 20px;
-            min-height: 80px;
-        }
-        .fake-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-        .fake-btn {
-            background: #3a3a4a;
-            padding: 16px;
-            text-align: center;
-            border-radius: 20px;
-            font-size: 20px;
-            font-weight: bold;
-            color: #ccc;
-            cursor: pointer;
-        }
-        .fake-btn:active { background: #4a4a5a; }
-        .chat-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 340px;
-            max-width: calc(100vw - 40px);
-            background: #0f172a;
-            border-radius: 24px;
-            display: none;
-            z-index: 1000;
-            border: 1px solid #334155;
-        }
-        .chat-header {
-            background: #1e293b;
-            padding: 12px 16px;
-            border-radius: 24px 24px 0 0;
-            display: flex;
-            justify-content: space-between;
-            color: white;
-            font-weight: bold;
-        }
-        .chat-body {
-            height: 400px;
-            display: flex;
-            flex-direction: column;
-        }
-        .messages-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
-            font-size: 14px;
-        }
-        .msg-boy { background: #3b82f6; color: white; margin: 6px 0; padding: 8px 12px; border-radius: 18px; border-top-left-radius: 4px; max-width: 85%; }
-        .msg-girl { background: #10b981; color: white; margin: 6px 0; padding: 8px 12px; border-radius: 18px; border-top-right-radius: 4px; max-width: 85%; margin-left: auto; }
-        .msg-input-area { display: flex; padding: 12px; gap: 8px; border-top: 1px solid #334155; background: #0f172a; border-radius: 0 0 24px 24px; }
-        .msg-input-area input { flex: 1; padding: 10px; border-radius: 40px; border: none; background: #1e293b; color: white; }
-        .msg-input-area button { background: #3b82f6; border: none; padding: 8px 16px; border-radius: 40px; color: white; }
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-        .login-box {
-            background: #1e293b;
-            padding: 24px;
-            border-radius: 32px;
-            width: 280px;
-        }
-        .login-box input {
-            width: 100%;
-            padding: 12px;
-            margin: 12px 0;
-            border-radius: 40px;
-            border: none;
-        }
-        .close-icon { cursor: pointer; font-size: 20px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>计算器 </title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b0b12;
+      font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* 主容器 - 完全铺满手机全屏 */
+    .app-container {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh; /* 动态视口高度，适配现代手机 */
+      position: relative;
+      background: radial-gradient(circle at 20% 20%, #1e1e2f, #0a0a14);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== 计算器风格（伪装主界面）===== */
+    .calculator-fullscreen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 16px 24px;
+      background: linear-gradient(145deg, #1a1a28 0%, #0f0f1a 100%);
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+    }
+
+    /* 屏幕区域 - 大且清晰 */
+    .calc-display {
+      background: #0c0c16;
+      border-radius: 32px;
+      margin-bottom: 20px;
+      padding: 20px 20px;
+      box-shadow: inset 0 8px 16px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.08);
+      flex: 0 0 auto;
+      min-height: 110px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+    }
+
+    .calc-display .expression {
+      color: #7f8c9a;
+      font-size: 18px;
+      font-family: 'Fira Code', monospace;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      opacity: 0.8;
+    }
+
+    .calc-display .result {
+      color: #4ade80;
+      font-size: 48px;
+      font-weight: 600;
+      font-family: 'Fira Code', 'JetBrains Mono', monospace;
+      text-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
+      line-height: 1.1;
+      word-break: break-all;
+      text-align: right;
+      width: 100%;
+    }
+
+    /* 按钮网格 - 大按钮，易触摸 */
+    .calc-buttons-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .calc-btn {
+      background: #252537;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 500;
+      color: #e2e8f0;
+      box-shadow: 0 6px 0 #15151f, 0 8px 16px rgba(0,0,0,0.5);
+      transition: all 0.08s ease;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(4px);
+      position: relative;
+    }
+
+    .calc-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #0f0f18, 0 4px 10px rgba(0,0,0,0.6);
+      background: #313148;
+    }
+
+    /* 运算符特殊颜色 */
+    .calc-btn.operator {
+      background: #3d3d5a;
+      color: #ffb347;
+      font-weight: 600;
+      border: 1px solid rgba(255,179,71,0.2);
+    }
+
+    .calc-btn.clear {
+      background: #4a2e3a;
+      color: #ff7b7b;
+      font-weight: 600;
+    }
+
+    .calc-btn.equals {
+      background: #2e5a4a;
+      color: #4ade80;
+      font-weight: 700;
+      grid-row: span 1;
+    }
+
+    .calc-btn.zero {
+      grid-column: span 1;
+    }
+
+    /* 提示长按的小标记 - 在屏幕右上角 */
+    .secret-hint {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      color: rgba(255,255,255,0.25);
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,0,0,0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .secret-hint i {
+      font-style: normal;
+      font-size: 14px;
+    }
+
+    /* ===== 聊天面板（隐藏状态） ===== */
+    .chat-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0f172a;
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      border-radius: 0;
+      backdrop-filter: blur(20px);
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    .chat-header {
+      background: #1e293b;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      font-weight: 600;
+      font-size: 20px;
+      border-bottom: 1px solid #334155;
+      backdrop-filter: blur(10px);
+    }
+
+    .chat-header span:first-child {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-header .close-btn {
+      font-size: 28px;
+      cursor: pointer;
+      color: #94a3b8;
+      padding: 8px;
+      border-radius: 16px;
+      transition: 0.2s;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chat-header .close-btn:active {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #0b1120;
+    }
+
+    .message-bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 22px;
+      font-size: 16px;
+      line-height: 1.4;
+      word-break: break-word;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .msg-boy {
+      background: #2563eb;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 6px;
+      margin-left: auto;
+    }
+
+    .msg-girl {
+      background: #10b981;
+      color: white;
+      align-self: flex-start;
+      border-bottom-left-radius: 6px;
+      margin-right: auto;
+    }
+
+    .msg-sender {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 4px;
+      opacity: 0.85;
+    }
+
+    .msg-time {
+      font-size: 11px;
+      opacity: 0.65;
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 16px;
+      gap: 10px;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      align-items: center;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 40px;
+      border: none;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+      outline: none;
+      border: 1px solid #334155;
+    }
+
+    .input-area button {
+      background: #3b82f6;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 40px;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 4px 10px rgba(59,130,246,0.4);
+    }
+
+    .input-area button:active {
+      background: #2563eb;
+      transform: scale(0.96);
+    }
+
+    /* 登录遮罩 */
+    .login-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+    }
+
+    .login-dialog {
+      background: #1e293b;
+      padding: 28px 24px;
+      border-radius: 36px;
+      width: 300px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      border: 1px solid #334155;
+    }
+
+    .login-dialog h3 {
+      color: white;
+      margin-bottom: 20px;
+      font-size: 22px;
+      text-align: center;
+    }
+
+    .login-dialog input {
+      width: 100%;
+      padding: 14px 16px;
+      margin: 12px 0;
+      border-radius: 30px;
+      border: none;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+      border: 1px solid #475569;
+    }
+
+    .login-dialog button {
+      width: 100%;
+      padding: 14px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 16px;
+      cursor: pointer;
+    }
+
+    .error-text {
+      color: #ff6b6b;
+      margin-top: 12px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 滚动条美化 */
+    .messages-container::-webkit-scrollbar {
+      width: 4px;
+    }
+    .messages-container::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
-
-<div class="fake-calculator" id="fakeCalc">
-    <div class="fake-screen" id="calcScreen">0</div>
-    <div class="fake-buttons">
-        <div class="fake-btn" data-val="7">7</div><div class="fake-btn" data-val="8">8</div><div class="fake-btn" data-val="9">9</div><div class="fake-btn" data-val="/">÷</div>
-        <div class="fake-btn" data-val="4">4</div><div class="fake-btn" data-val="5">5</div><div class="fake-btn" data-val="6">6</div><div class="fake-btn" data-val="*">×</div>
-        <div class="fake-btn" data-val="1">1</div><div class="fake-btn" data-val="2">2</div><div class="fake-btn" data-val="3">3</div><div class="fake-btn" data-val="-">-</div>
-        <div class="fake-btn" data-val="0">0</div><div class="fake-btn" data-val="C">C</div><div class="fake-btn" data-val="=">=</div><div class="fake-btn" data-val="+">+</div>
+<div class="app-container" id="appContainer">
+  <!-- 伪装计算器主界面 -->
+  <div class="calculator-fullscreen" id="calculatorUI">
+    <div class="secret-hint">
+      <span>🔒 长按屏幕上方</span>
     </div>
-</div>
+    <div class="calc-display">
+      <div class="expression" id="calcExpression"></div>
+      <div class="result" id="calcResult">0</div>
+    </div>
+    <div class="calc-buttons-grid" id="calcButtons">
+      <!-- 动态生成按钮，保证结构清晰 -->
+    </div>
+  </div>
 
-<div class="chat-container" id="chatContainer">
+  <!-- 聊天面板 (默认隐藏) -->
+  <div class="chat-panel" id="chatPanel">
     <div class="chat-header">
-        <span>备忘录</span>
-        <span class="close-icon" id="closeChat">✕</span>
+      <span>📝 我们的备忘录</span>
+      <span class="close-btn" id="closeChatBtn">✕</span>
     </div>
-    <div class="chat-body">
-        <div class="messages-area" id="messagesArea">
-            <div style="text-align:center; color:#888;">加载中...</div>
-        </div>
-        <div class="msg-input-area">
-            <input type="text" id="messageInput" placeholder="写点什么..." autocomplete="off">
-            <button id="sendBtn">发送</button>
-        </div>
+    <div class="messages-container" id="messagesArea">
+      <div style="text-align:center;color:#888;margin-top:40px;">✨ 连接中...</div>
     </div>
-</div>
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="写一句悄悄话..." autocomplete="off">
+      <button id="sendMessageBtn">发送</button>
+    </div>
+  </div>
 
-<div id="loginOverlay" class="login-overlay">
-    <div class="login-box">
-        <h3 style="color:white;">验证</h3>
-        <input type="password" id="loginPassword" placeholder="密码" autocomplete="off">
-        <button id="loginBtn">进入</button>
-        <div id="loginError" style="color:#ff6b6b; margin-top:12px; font-size:14px;"></div>
+  <!-- 登录遮罩 -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-dialog">
+      <h3>🔐 私密验证</h3>
+      <input type="password" id="passwordInput" placeholder="输入密码" autocomplete="off">
+      <button id="loginSubmitBtn">进入空间</button>
+      <div class="error-text" id="loginError"></div>
     </div>
+  </div>
 </div>
 
 <script>
-// ==================== 计算器逻辑 ====================
-let calcValue = '0';
-let lastOperator = null;
-let pendingValue = null;
+  (function() {
+    // ========== 计算器核心 ==========
+    let currentInput = '0';
+    let previousInput = '';
+    let operation = null;
+    let shouldResetScreen = false;
 
-function updateScreen() {
-    document.getElementById('calcScreen').innerText = calcValue;
-}
+    const calcResultEl = document.getElementById('calcResult');
+    const calcExpressionEl = document.getElementById('calcExpression');
+    const calcButtonsGrid = document.getElementById('calcButtons');
 
-document.querySelectorAll('.fake-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const val = btn.dataset.val;
-        
-        if (val === 'C') {
-            calcValue = '0';
-            lastOperator = null;
-            pendingValue = null;
-            updateScreen();
-        } 
-        else if (val === '=') {
-            if (lastOperator && pendingValue !== null) {
-                const current = parseFloat(calcValue);
-                let result;
-                if (lastOperator === '+') result = pendingValue + current;
-                else if (lastOperator === '-') result = pendingValue - current;
-                else if (lastOperator === '*') result = pendingValue * current;
-                else if (lastOperator === '/') result = pendingValue / current;
-                calcValue = String(result);
-                lastOperator = null;
-                pendingValue = null;
-                updateScreen();
-            }
-        }
-        else if (['+','-','*','/'].includes(val)) {
-            if (lastOperator && pendingValue !== null) {
-                const current = parseFloat(calcValue);
-                let result;
-                if (lastOperator === '+') result = pendingValue + current;
-                else if (lastOperator === '-') result = pendingValue - current;
-                else if (lastOperator === '*') result = pendingValue * current;
-                else if (lastOperator === '/') result = pendingValue / current;
-                calcValue = String(result);
-                updateScreen();
-            }
-            pendingValue = parseFloat(calcValue);
-            lastOperator = val;
-            calcValue = '0';
-            updateScreen();
-        }
-        else {
-            if (calcValue === '0') calcValue = val;
-            else calcValue += val;
-            updateScreen();
-        }
-    });
-});
+    // 按钮布局
+    const buttons = [
+      ['C', '⌫', '%', '/'],
+      ['7', '8', '9', '*'],
+      ['4', '5', '6', '-'],
+      ['1', '2', '3', '+'],
+      ['0', '.', '=', '']
+    ];
 
-// ==================== 聊天逻辑 ====================
-let authActive = false;
-let myRole = null;
-let refreshInterval = null;
-
-// 获取 DOM 元素
-const loginOverlay = document.getElementById('loginOverlay');
-const chatContainer = document.getElementById('chatContainer');
-const loginPassword = document.getElementById('loginPassword');
-const loginBtn = document.getElementById('loginBtn');
-const loginError = document.getElementById('loginError');
-const messagesArea = document.getElementById('messagesArea');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
-const closeChat = document.getElementById('closeChat');
-
-// 登录按钮事件
-loginBtn.onclick = async function() {
-    const pwd = loginPassword.value.trim();
-    if (!pwd) {
-        loginError.innerText = '请输入密码';
-        return;
+    function renderCalcButtons() {
+      calcButtonsGrid.innerHTML = '';
+      buttons.forEach(row => {
+        row.forEach(btn => {
+          if (btn === '') return;
+          const buttonDiv = document.createElement('div');
+          buttonDiv.className = 'calc-btn';
+          if (btn === 'C') buttonDiv.classList.add('clear');
+          if (['/','*','-','+','%'].includes(btn)) buttonDiv.classList.add('operator');
+          if (btn === '=') buttonDiv.classList.add('equals');
+          if (btn === '0') buttonDiv.classList.add('zero');
+          buttonDiv.textContent = btn;
+          buttonDiv.dataset.action = btn;
+          buttonDiv.addEventListener('click', (e) => handleCalcAction(btn));
+          calcButtonsGrid.appendChild(buttonDiv);
+        });
+      });
     }
-    
-    loginError.innerText = '登录中...';
-    
-    try {
+
+    function updateCalcDisplay() {
+      calcResultEl.textContent = currentInput;
+      if (operation && previousInput) {
+        calcExpressionEl.textContent = `${previousInput} ${operation}`;
+      } else {
+        calcExpressionEl.textContent = '';
+      }
+    }
+
+    function handleCalcAction(action) {
+      if (action >= '0' && action <= '9' || action === '.') {
+        if (shouldResetScreen) {
+          currentInput = action;
+          shouldResetScreen = false;
+        } else {
+          if (action === '.' && currentInput.includes('.')) return;
+          currentInput = currentInput === '0' && action !== '.' ? action : currentInput + action;
+        }
+      } else if (action === 'C') {
+        currentInput = '0';
+        previousInput = '';
+        operation = null;
+        shouldResetScreen = false;
+      } else if (action === '⌫') {
+        if (currentInput.length > 1) {
+          currentInput = currentInput.slice(0, -1);
+        } else {
+          currentInput = '0';
+        }
+      } else if (action === '%') {
+        currentInput = String(parseFloat(currentInput) / 100);
+      } else if (['+','-','*','/'].includes(action)) {
+        if (operation && !shouldResetScreen) {
+          currentInput = calculate(previousInput, currentInput, operation);
+        }
+        previousInput = currentInput;
+        operation = action;
+        shouldResetScreen = true;
+      } else if (action === '=') {
+        if (operation && previousInput) {
+          currentInput = calculate(previousInput, currentInput, operation);
+          previousInput = '';
+          operation = null;
+          shouldResetScreen = true;
+        }
+      }
+      updateCalcDisplay();
+    }
+
+    function calculate(a, b, op) {
+      const numA = parseFloat(a);
+      const numB = parseFloat(b);
+      if (isNaN(numA) || isNaN(numB)) return '0';
+      let result;
+      switch(op) {
+        case '+': result = numA + numB; break;
+        case '-': result = numA - numB; break;
+        case '*': result = numA * numB; break;
+        case '/': result = numB !== 0 ? numA / numB : '错误'; break;
+        default: return b;
+      }
+      if (result === '错误') return '错误';
+      return String(Math.round(result * 1000000) / 1000000);
+    }
+
+    renderCalcButtons();
+    updateCalcDisplay();
+
+    // ========== 私密聊天逻辑 ==========
+    const calculatorUI = document.getElementById('calculatorUI');
+    const chatPanel = document.getElementById('chatPanel');
+    const loginOverlay = document.getElementById('loginOverlay');
+    const messagesArea = document.getElementById('messagesArea');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendMessageBtn');
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    const passwordInput = document.getElementById('passwordInput');
+    const loginSubmit = document.getElementById('loginSubmitBtn');
+    const loginError = document.getElementById('loginError');
+
+    let authActive = false;
+    let myRole = 'boy'; 
+    let refreshTimer = null;
+    let heartbeatTimer = null;
+
+    // 显示登录遮罩
+    function showLogin() {
+      loginOverlay.classList.remove('hidden');
+      chatPanel.style.display = 'none';
+      passwordInput.value = '';
+      loginError.textContent = '';
+    }
+
+    // 隐藏登录，显示聊天
+    function openChat() {
+      loginOverlay.classList.add('hidden');
+      chatPanel.style.display = 'flex';
+      loadMessages();
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(loadMessages, 4000);
+      startHeartbeat();
+    }
+
+    // 关闭聊天，返回计算器
+    function closeChat() {
+      chatPanel.style.display = 'none';
+      if (refreshTimer) clearInterval(refreshTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+    }
+
+    // 退出登录
+    function logout() {
+      authActive = false;
+      closeChat();
+      showLogin();
+      if (refreshTimer) clearInterval(refreshTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+    }
+
+    // 登录请求
+    loginSubmit.addEventListener('click', async () => {
+      const pwd = passwordInput.value.trim();
+      if (!pwd) {
+        loginError.textContent = '请输入密码';
+        return;
+      }
+      loginError.textContent = '验证中...';
+      try {
         const resp = await fetch('/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pwd })
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ password: pwd })
         });
         const data = await resp.json();
-        
         if (resp.ok && data.status === 'ok') {
-            authActive = true;
-            myRole = data.role;
-            loginOverlay.style.display = 'none';
-            chatContainer.style.display = 'block';
-            loadMessages();
-            if (refreshInterval) clearInterval(refreshInterval);
-            refreshInterval = setInterval(loadMessages, 4000);
-            startHeartbeat();
+          authActive = true;
+          myRole = data.role || 'boy';
+          openChat();
         } else {
-            loginError.innerText = '密码错误';
+          loginError.textContent = '密码错误';
         }
-    } catch (err) {
-        loginError.innerText = '网络错误：' + err.message;
-    }
-};
+      } catch (err) {
+        loginError.textContent = '网络异常';
+      }
+    });
 
-// 发送消息
-sendBtn.onclick = async function() {
-    const text = messageInput.value.trim();
-    if (!text) return;
-    
-    try {
+    // 发送消息
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !authActive) return;
+      try {
         const resp = await fetch('/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text })
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ text: text })
         });
-        if (resp.status === 401) {
-            logout();
-            return;
-        }
+        if (resp.status === 401) { logout(); return; }
         messageInput.value = '';
         loadMessages();
-    } catch (err) {
+      } catch (e) {
         alert('发送失败');
+      }
     }
-};
 
-// 回车发送
-messageInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        sendBtn.onclick();
-    }
-});
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
 
-// 关闭聊天
-closeChat.onclick = function() {
-    chatContainer.style.display = 'none';
-};
+    closeChatBtn.addEventListener('click', closeChat);
 
-// 长按打开聊天（关键修复：使用正确的元素引用）
-const fakeCalc = document.getElementById('fakeCalc');
-let longPressTimer = null;
-
-fakeCalc.addEventListener('touchstart', function(e) {
-    // 只有点击计算器本体或屏幕区域才触发
-    if (e.target === fakeCalc || e.target.classList.contains('fake-screen') || e.target.classList.contains('fake-calculator')) {
-        longPressTimer = setTimeout(function() {
-            if (authActive) {
-                chatContainer.style.display = 'block';
-            } else {
-                loginOverlay.style.display = 'flex';
-            }
-        }, 800);
-    }
-});
-
-fakeCalc.addEventListener('touchend', function() {
-    if (longPressTimer) clearTimeout(longPressTimer);
-});
-
-// 鼠标版本（用于电脑调试）
-fakeCalc.addEventListener('mousedown', function(e) {
-    if (e.target === fakeCalc || e.target.classList.contains('fake-screen') || e.target.classList.contains('fake-calculator')) {
-        longPressTimer = setTimeout(function() {
-            if (authActive) {
-                chatContainer.style.display = 'block';
-            } else {
-                loginOverlay.style.display = 'flex';
-            }
-        }, 800);
-    }
-});
-
-window.addEventListener('mouseup', function() {
-    if (longPressTimer) clearTimeout(longPressTimer);
-});
-
-// 心跳检查
-async function startHeartbeat() {
-    setInterval(async function() {
-        if (!authActive) return;
-        try {
-            const resp = await fetch('/check_auth');
-            const data = await resp.json();
-            if (!data.valid) {
-                alert('会话已过期，请重新登录');
-                logout();
-            } else {
-                if (data.role) myRole = data.role;
-            }
-        } catch (err) {}
-    }, 15000);
-}
-
-// 加载消息
-async function loadMessages() {
-    if (!authActive) return;
-    try {
+    // 加载消息
+    async function loadMessages() {
+      if (!authActive) return;
+      try {
         const resp = await fetch('/messages');
-        if (resp.status === 401) {
-            logout();
-            return;
-        }
+        if (resp.status === 401) { logout(); return; }
         const msgs = await resp.json();
-        
         if (!msgs || msgs.length === 0) {
-            messagesArea.innerHTML = '<div style="text-align:center; color:#888;">暂无消息，发点什么吧</div>';
-            return;
+          messagesArea.innerHTML = '<div style="text-align:center;color:#94a3b8;margin-top:30px;">💬 还没有消息，发一条吧</div>';
+          return;
         }
-        
         let html = '';
-        for (let i = 0; i < msgs.length; i++) {
-            const m = msgs[i];
-            const senderName = m.sender === 'boy' ? '我' : '她';
-            const className = m.sender === 'boy' ? 'msg-boy' : 'msg-girl';
-            html += '<div class="' + className + '"><strong>' + senderName + '</strong><br>' + escapeHtml(m.text) + '<div style="font-size:10px; opacity:0.6; margin-top:4px;">' + m.time + '</div></div>';
-        }
+        msgs.forEach(m => {
+          const sender = m.sender === 'boy' ? '我' : '她';
+          const cls = m.sender === 'boy' ? 'msg-boy' : 'msg-girl';
+          html += `<div class="message-bubble ${cls}">
+            <div class="msg-sender">${sender}</div>
+            <div>${escapeHtml(m.text)}</div>
+            <div class="msg-time">${m.time || ''}</div>
+          </div>`;
+        });
         messagesArea.innerHTML = html;
         messagesArea.scrollTop = messagesArea.scrollHeight;
-    } catch (err) {
-        console.log('加载消息失败', err);
+      } catch (e) {}
     }
-}
 
-// 退出登录
-function logout() {
-    authActive = false;
-    if (refreshInterval) clearInterval(refreshInterval);
-    chatContainer.style.display = 'none';
-    loginOverlay.style.display = 'flex';
-    loginPassword.value = '';
-    loginError.innerText = '';
-    localStorage.clear();
-    sessionStorage.clear();
-}
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+    }
 
-// 防XSS
-function escapeHtml(str) {
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
+    function startHeartbeat() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      heartbeatTimer = setInterval(async () => {
+        if (!authActive) return;
+        try {
+          const resp = await fetch('/check_auth');
+          const data = await resp.json();
+          if (!data.valid) { alert('会话过期'); logout(); }
+        } catch(e) {}
+      }, 15000);
+    }
+
+    // ===== 长按触发私密入口 =====
+    let pressTimer = null;
+    const longPressDuration = 800;
+
+    function startLongPress(e) {
+      // 只允许在计算器显示区域或屏幕顶部区域触发
+      const target = e.target;
+      if (target.closest('.calc-btn') || target.closest('.calc-display') || target.closest('.calculator-fullscreen') || target.closest('.secret-hint')) {
+        pressTimer = setTimeout(() => {
+          if (authActive) {
+            chatPanel.style.display = 'flex';
+            loadMessages();
+          } else {
+            showLogin();
+          }
+        }, longPressDuration);
+      }
+    }
+
+    function cancelLongPress() {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    }
+
+    // 绑定事件到计算器UI
+    calculatorUI.addEventListener('touchstart', startLongPress, {passive: false});
+    calculatorUI.addEventListener('touchend', cancelLongPress);
+    calculatorUI.addEventListener('touchmove', cancelLongPress);
+    calculatorUI.addEventListener('mousedown', startLongPress);
+    window.addEventListener('mouseup', cancelLongPress);
+
+    // 初始状态：未登录，但计算器正常显示
+    // 如果之前有登录状态可自行调整，这里默认未登录
+    loginOverlay.classList.add('hidden');
+    chatPanel.style.display = 'none';
+
+    // 防止页面意外刷新导致状态丢失，简单处理
+  })();
 </script>
 </body>
 </html>
