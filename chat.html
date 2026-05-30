@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>计算器</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; }
+        body { 
+            background: #1e1e2f; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', system-ui;
+        }
+        .fake-calculator {
+            background: #2d2d3a;
+            border-radius: 28px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 320px;
+        }
+        .fake-screen {
+            background: #1a1a24;
+            border-radius: 16px;
+            padding: 20px 16px;
+            text-align: right;
+            font-size: 28px;
+            color: #4ade80;
+            font-family: monospace;
+            margin-bottom: 20px;
+            min-height: 80px;
+        }
+        .fake-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .fake-btn {
+            background: #3a3a4a;
+            padding: 16px;
+            text-align: center;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ccc;
+            cursor: pointer;
+        }
+        .fake-btn:active { background: #4a4a5a; }
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 340px;
+            max-width: calc(100vw - 40px);
+            background: #0f172a;
+            border-radius: 24px;
+            display: none;
+            z-index: 1000;
+            border: 1px solid #334155;
+        }
+        .chat-header {
+            background: #1e293b;
+            padding: 12px 16px;
+            border-radius: 24px 24px 0 0;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-weight: bold;
+        }
+        .chat-body {
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 14px;
+        }
+        .msg-boy { background: #3b82f6; color: white; margin: 6px 0; padding: 8px 12px; border-radius: 18px; border-top-left-radius: 4px; max-width: 85%; align-self: flex-start; }
+        .msg-girl { background: #10b981; color: white; margin: 6px 0; padding: 8px 12px; border-radius: 18px; border-top-right-radius: 4px; max-width: 85%; align-self: flex-end; margin-left: auto; }
+        .msg-input-area { display: flex; padding: 12px; gap: 8px; border-top: 1px solid #334155; background: #0f172a; border-radius: 0 0 24px 24px; }
+        .msg-input-area input { flex: 1; padding: 10px; border-radius: 40px; border: none; background: #1e293b; color: white; }
+        .msg-input-area button { background: #3b82f6; border: none; padding: 8px 16px; border-radius: 40px; color: white; }
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .login-box {
+            background: #1e293b;
+            padding: 24px;
+            border-radius: 32px;
+            width: 280px;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 40px;
+            border: none;
+        }
+        .close-icon { cursor: pointer; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="fake-calculator" id="fakeCalc">
+    <div class="fake-screen" id="calcScreen">0</div>
+    <div class="fake-buttons">
+        <div class="fake-btn" data-val="7">7</div><div class="fake-btn" data-val="8">8</div><div class="fake-btn" data-val="9">9</div><div class="fake-btn" data-val="/">÷</div>
+        <div class="fake-btn" data-val="4">4</div><div class="fake-btn" data-val="5">5</div><div class="fake-btn" data-val="6">6</div><div class="fake-btn" data-val="*">×</div>
+        <div class="fake-btn" data-val="1">1</div><div class="fake-btn" data-val="2">2</div><div class="fake-btn" data-val="3">3</div><div class="fake-btn" data-val="-">-</div>
+        <div class="fake-btn" data-val="0">0</div><div class="fake-btn" data-val="C">C</div><div class="fake-btn" data-val="=">=</div><div class="fake-btn" data-val="+">+</div>
+    </div>
+</div>
+
+<div class="chat-container" id="chatContainer">
+    <div class="chat-header">
+        <span>备忘录</span>
+        <span class="close-icon" id="closeChat">✕</span>
+    </div>
+    <div class="chat-body">
+        <div class="messages-area" id="messagesArea">
+            <div style="text-align:center; color:#888;">加载中...</div>
+        </div>
+        <div class="msg-input-area">
+            <input type="text" id="messageInput" placeholder="写点什么..." autocomplete="off">
+            <button id="sendBtn">发送</button>
+        </div>
+    </div>
+</div>
+
+<div id="loginOverlay" class="login-overlay">
+    <div class="login-box">
+        <h3 style="color:white;">验证</h3>
+        <input type="password" id="loginPassword" placeholder="密码" autocomplete="off">
+        <button id="loginBtn" style="width:100%; padding:10px; background:#3b82f6; color:white; border:none; border-radius:40px;">进入</button>
+        <div id="loginError" style="color:#ff6b6b; margin-top:12px; font-size:14px;"></div>
+    </div>
+</div>
+
+<script>
+let calcValue = '0';
+let lastOperator = null;
+let pendingValue = null;
+
+document.querySelectorAll('.fake-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = btn.dataset.val;
+        const screen = document.getElementById('calcScreen');
+        
+        if (val === 'C') {
+            calcValue = '0';
+            lastOperator = null;
+            pendingValue = null;
+            screen.innerText = calcValue;
+        } 
+        else if (val === '=') {
+            if (lastOperator && pendingValue !== null) {
+                const current = parseFloat(calcValue);
+                let result;
+                if (lastOperator === '+') result = pendingValue + current;
+                else if (lastOperator === '-') result = pendingValue - current;
+                else if (lastOperator === '*') result = pendingValue * current;
+                else if (lastOperator === '/') result = pendingValue / current;
+                calcValue = String(result);
+                lastOperator = null;
+                pendingValue = null;
+                screen.innerText = calcValue;
+            }
+        }
+        else if (['+','-','*','/'].includes(val)) {
+            if (lastOperator && pendingValue !== null) {
+                const current = parseFloat(calcValue);
+                let result;
+                if (lastOperator === '+') result = pendingValue + current;
+                else if (lastOperator === '-') result = pendingValue - current;
+                else if (lastOperator === '*') result = pendingValue * current;
+                else if (lastOperator === '/') result = pendingValue / current;
+                calcValue = String(result);
+                screen.innerText = calcValue;
+            }
+            pendingValue = parseFloat(calcValue);
+            lastOperator = val;
+            calcValue = '0';
+            screen.innerText = calcValue;
+        }
+        else {
+            if (calcValue === '0') calcValue = val;
+            else calcValue += val;
+            screen.innerText = calcValue;
+        }
+    });
+});
+
+let authActive = false;
+let myRole = null;
+let messageInterval = null;
+
+const fakeCalcDiv = document.getElementById('fakeCalc');
+let touchTimer = null;
+fakeCalcDiv.addEventListener('touchstart', (e) => {
+    if (e.target === fakeCalcDiv || e.target.classList.contains('fake-screen')) {
+        touchTimer = setTimeout(() => {
+            if (authActive) {
+                document.getElementById('chatContainer').style.display = 'block';
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+            }
+        }, 800);
+    }
+});
+fakeCalcDiv.addEventListener('touchend', () => {
+    if (touchTimer) clearTimeout(touchTimer);
+});
+
+let mouseTimer = null;
+fakeCalcDiv.addEventListener('mousedown', (e) => {
+    if (e.target === fakeCalcDiv || e.target.classList.contains('fake-screen')) {
+        mouseTimer = setTimeout(() => {
+            if (authActive) document.getElementById('chatContainer').style.display = 'block';
+            else document.getElementById('loginOverlay').style.display = 'flex';
+        }, 800);
+    }
+});
+window.addEventListener('mouseup', () => { if(mouseTimer) clearTimeout(mouseTimer); });
+
+document.getElementById('closeChat').onclick = () => {
+    document.getElementById('chatContainer').style.display = 'none';
+};
+
+document.getElementById('loginBtn').onclick = async () => {
+    const pwd = document.getElementById('loginPassword').value;
+    const resp = await fetch('/auth', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({password: pwd})
+    });
+    const data = await resp.json();
+    if (resp.ok && data.status === 'ok') {
+        authActive = true;
+        myRole = data.role;
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('chatContainer').style.display = 'block';
+        loadMessages();
+        if (messageInterval) clearInterval(messageInterval);
+        messageInterval = setInterval(loadMessages, 4000);
+        startHeartbeat();
+    } else {
+        document.getElementById('loginError').innerText = '密码错误';
+    }
+};
+
+async function startHeartbeat() {
+    setInterval(async () => {
+        if (!authActive) return;
+        const resp = await fetch('/check_auth');
+        const data = await resp.json();
+        if (!data.valid) {
+            alert('会话已过期');
+            logout();
+        } else {
+            if (data.role) myRole = data.role;
+        }
+    }, 15000);
+}
+
+async function loadMessages() {
+    if (!authActive) return;
+    const resp = await fetch('/messages');
+    if (resp.status === 401) return logout();
+    const msgs = await resp.json();
+    const container = document.getElementById('messagesArea');
+    if (msgs.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#888;">暂无消息，发点什么吧</div>';
+        return;
+    }
+    container.innerHTML = msgs.map(m => {
+        const isMe = (myRole === 'boy' && m.sender === 'boy') || (myRole === 'girl' && m.sender === 'girl');
+        const senderName = m.sender === 'boy' ? '我' : '她';
+        const className = m.sender === 'boy' ? 'msg-boy' : 'msg-girl';
+        return `<div class="${className}" style="${isMe ? 'opacity:0.9;' : ''}"><strong>${senderName}</strong><br>${escapeHtml(m.text)}<div style="font-size:10px; opacity:0.6; margin-top:4px;">${m.time}</div></div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendMsg() {
+    const input = document.getElementById('messageInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const resp = await fetch('/messages', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: text})
+    });
+    if (resp.status === 401) return logout();
+    input.value = '';
+    loadMessages();
+}
+
+document.getElementById('sendBtn').onclick = sendMsg;
+document.getElementById('messageInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMsg();
+});
+
+function logout() {
+    authActive = false;
+    if (messageInterval) clearInterval(messageInterval);
+    document.getElementById('chatContainer').style.display = 'none';
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').innerText = '';
+    localStorage.clear();
+    sessionStorage.clear();
+}
+
+function escapeHtml(str) {
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+</script>
+</body>
+</html>
