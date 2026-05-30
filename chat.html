@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>计算器 </title>
+  <title>计算器</title>
   <style>
     * {
       margin: 0;
@@ -26,7 +26,7 @@
     .app-container {
       width: 100vw;
       height: 100vh;
-      height: 100dvh; /* 动态视口高度，适配现代手机 */
+      height: 100dvh;
       position: relative;
       background: radial-gradient(circle at 20% 20%, #1e1e2f, #0a0a14);
       display: flex;
@@ -34,7 +34,7 @@
       overflow: hidden;
     }
 
-    /* ===== 计算器风格（伪装主界面）===== */
+    /* 计算器风格（伪装主界面）*/
     .calculator-fullscreen {
       width: 100%;
       height: 100%;
@@ -45,7 +45,6 @@
       box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
     }
 
-    /* 屏幕区域 - 大且清晰 */
     .calc-display {
       background: #0c0c16;
       border-radius: 32px;
@@ -82,7 +81,6 @@
       width: 100%;
     }
 
-    /* 按钮网格 - 大按钮，易触摸 */
     .calc-buttons-grid {
       flex: 1;
       display: grid;
@@ -106,7 +104,6 @@
       cursor: pointer;
       border: 1px solid rgba(255,255,255,0.06);
       backdrop-filter: blur(4px);
-      position: relative;
     }
 
     .calc-btn:active {
@@ -115,7 +112,6 @@
       background: #313148;
     }
 
-    /* 运算符特殊颜色 */
     .calc-btn.operator {
       background: #3d3d5a;
       color: #ffb347;
@@ -133,14 +129,8 @@
       background: #2e5a4a;
       color: #4ade80;
       font-weight: 700;
-      grid-row: span 1;
     }
 
-    .calc-btn.zero {
-      grid-column: span 1;
-    }
-
-    /* 提示长按的小标记 - 在屏幕右上角 */
     .secret-hint {
       position: absolute;
       top: 20px;
@@ -159,12 +149,7 @@
       z-index: 10;
     }
 
-    .secret-hint i {
-      font-style: normal;
-      font-size: 14px;
-    }
-
-    /* ===== 聊天面板（隐藏状态） ===== */
+    /* 聊天面板 */
     .chat-panel {
       position: absolute;
       top: 0;
@@ -175,8 +160,6 @@
       display: none;
       flex-direction: column;
       z-index: 100;
-      border-radius: 0;
-      backdrop-filter: blur(20px);
       background: rgba(15, 23, 42, 0.98);
     }
 
@@ -190,13 +173,6 @@
       font-weight: 600;
       font-size: 20px;
       border-bottom: 1px solid #334155;
-      backdrop-filter: blur(10px);
-    }
-
-    .chat-header span:first-child {
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
     .chat-header .close-btn {
@@ -205,7 +181,6 @@
       color: #94a3b8;
       padding: 8px;
       border-radius: 16px;
-      transition: 0.2s;
       width: 44px;
       height: 44px;
       display: flex;
@@ -228,6 +203,25 @@
       background: #0b1120;
     }
 
+    /* 微信风格时间横条 */
+    .time-divider {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 8px 0;
+    }
+
+    .time-divider span {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(4px);
+      color: #e2e8f0;
+      font-size: 13px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      font-weight: 400;
+    }
+
     .message-bubble {
       max-width: 80%;
       padding: 12px 16px;
@@ -239,7 +233,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
 
-    .msg-boy {
+    .msg-0213 {
       background: #2563eb;
       color: white;
       align-self: flex-end;
@@ -247,7 +241,7 @@
       margin-left: auto;
     }
 
-    .msg-girl {
+    .msg-开心 {
       background: #10b981;
       color: white;
       align-self: flex-start;
@@ -299,7 +293,6 @@
       font-weight: bold;
       font-size: 16px;
       cursor: pointer;
-      transition: 0.2s;
       box-shadow: 0 4px 10px rgba(59,130,246,0.4);
     }
 
@@ -308,7 +301,6 @@
       transform: scale(0.96);
     }
 
-    /* 登录遮罩 */
     .login-overlay {
       position: absolute;
       top: 0;
@@ -375,7 +367,6 @@
       display: none !important;
     }
 
-    /* 滚动条美化 */
     .messages-container::-webkit-scrollbar {
       width: 4px;
     }
@@ -387,7 +378,7 @@
 </head>
 <body>
 <div class="app-container" id="appContainer">
-  <!-- 伪装计算器主界面 -->
+  <!-- 伪装计算器 -->
   <div class="calculator-fullscreen" id="calculatorUI">
     <div class="secret-hint">
       <span>🔒 长按屏幕上方</span>
@@ -396,12 +387,10 @@
       <div class="expression" id="calcExpression"></div>
       <div class="result" id="calcResult">0</div>
     </div>
-    <div class="calc-buttons-grid" id="calcButtons">
-      <!-- 动态生成按钮，保证结构清晰 -->
-    </div>
+    <div class="calc-buttons-grid" id="calcButtons"></div>
   </div>
 
-  <!-- 聊天面板 (默认隐藏) -->
+  <!-- 聊天面板 -->
   <div class="chat-panel" id="chatPanel">
     <div class="chat-header">
       <span>📝 我们的备忘录</span>
@@ -429,7 +418,7 @@
 
 <script>
   (function() {
-    // ========== 计算器核心 ==========
+    // ========== 计算器逻辑 ==========
     let currentInput = '0';
     let previousInput = '';
     let operation = null;
@@ -439,7 +428,6 @@
     const calcExpressionEl = document.getElementById('calcExpression');
     const calcButtonsGrid = document.getElementById('calcButtons');
 
-    // 按钮布局
     const buttons = [
       ['C', '⌫', '%', '/'],
       ['7', '8', '9', '*'],
@@ -458,10 +446,9 @@
           if (btn === 'C') buttonDiv.classList.add('clear');
           if (['/','*','-','+','%'].includes(btn)) buttonDiv.classList.add('operator');
           if (btn === '=') buttonDiv.classList.add('equals');
-          if (btn === '0') buttonDiv.classList.add('zero');
           buttonDiv.textContent = btn;
           buttonDiv.dataset.action = btn;
-          buttonDiv.addEventListener('click', (e) => handleCalcAction(btn));
+          buttonDiv.addEventListener('click', () => handleCalcAction(btn));
           calcButtonsGrid.appendChild(buttonDiv);
         });
       });
@@ -469,11 +456,7 @@
 
     function updateCalcDisplay() {
       calcResultEl.textContent = currentInput;
-      if (operation && previousInput) {
-        calcExpressionEl.textContent = `${previousInput} ${operation}`;
-      } else {
-        calcExpressionEl.textContent = '';
-      }
+      calcExpressionEl.textContent = operation && previousInput ? `${previousInput} ${operation}` : '';
     }
 
     function handleCalcAction(action) {
@@ -486,16 +469,9 @@
           currentInput = currentInput === '0' && action !== '.' ? action : currentInput + action;
         }
       } else if (action === 'C') {
-        currentInput = '0';
-        previousInput = '';
-        operation = null;
-        shouldResetScreen = false;
+        currentInput = '0'; previousInput = ''; operation = null; shouldResetScreen = false;
       } else if (action === '⌫') {
-        if (currentInput.length > 1) {
-          currentInput = currentInput.slice(0, -1);
-        } else {
-          currentInput = '0';
-        }
+        currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : '0';
       } else if (action === '%') {
         currentInput = String(parseFloat(currentInput) / 100);
       } else if (['+','-','*','/'].includes(action)) {
@@ -508,17 +484,14 @@
       } else if (action === '=') {
         if (operation && previousInput) {
           currentInput = calculate(previousInput, currentInput, operation);
-          previousInput = '';
-          operation = null;
-          shouldResetScreen = true;
+          previousInput = ''; operation = null; shouldResetScreen = true;
         }
       }
       updateCalcDisplay();
     }
 
     function calculate(a, b, op) {
-      const numA = parseFloat(a);
-      const numB = parseFloat(b);
+      const numA = parseFloat(a), numB = parseFloat(b);
       if (isNaN(numA) || isNaN(numB)) return '0';
       let result;
       switch(op) {
@@ -528,8 +501,7 @@
         case '/': result = numB !== 0 ? numA / numB : '错误'; break;
         default: return b;
       }
-      if (result === '错误') return '错误';
-      return String(Math.round(result * 1000000) / 1000000);
+      return result === '错误' ? '错误' : String(Math.round(result * 1000000) / 1000000);
     }
 
     renderCalcButtons();
@@ -548,11 +520,10 @@
     const loginError = document.getElementById('loginError');
 
     let authActive = false;
-    let myRole = 'boy'; 
+    let myRole = '0213';
     let refreshTimer = null;
     let heartbeatTimer = null;
 
-    // 显示登录遮罩
     function showLogin() {
       loginOverlay.classList.remove('hidden');
       chatPanel.style.display = 'none';
@@ -560,7 +531,6 @@
       loginError.textContent = '';
     }
 
-    // 隐藏登录，显示聊天
     function openChat() {
       loginOverlay.classList.add('hidden');
       chatPanel.style.display = 'flex';
@@ -570,14 +540,12 @@
       startHeartbeat();
     }
 
-    // 关闭聊天，返回计算器
     function closeChat() {
       chatPanel.style.display = 'none';
       if (refreshTimer) clearInterval(refreshTimer);
       if (heartbeatTimer) clearInterval(heartbeatTimer);
     }
 
-    // 退出登录
     function logout() {
       authActive = false;
       closeChat();
@@ -586,13 +554,9 @@
       if (heartbeatTimer) clearInterval(heartbeatTimer);
     }
 
-    // 登录请求
     loginSubmit.addEventListener('click', async () => {
       const pwd = passwordInput.value.trim();
-      if (!pwd) {
-        loginError.textContent = '请输入密码';
-        return;
-      }
+      if (!pwd) { loginError.textContent = '请输入密码'; return; }
       loginError.textContent = '验证中...';
       try {
         const resp = await fetch('/auth', {
@@ -603,7 +567,7 @@
         const data = await resp.json();
         if (resp.ok && data.status === 'ok') {
           authActive = true;
-          myRole = data.role || 'boy';
+          myRole = data.role || '0213';
           openChat();
         } else {
           loginError.textContent = '密码错误';
@@ -613,7 +577,6 @@
       }
     });
 
-    // 发送消息
     async function sendMessage() {
       const text = messageInput.value.trim();
       if (!text || !authActive) return;
@@ -635,10 +598,32 @@
     messageInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
-
     closeChatBtn.addEventListener('click', closeChat);
 
-    // 加载消息
+    // 格式化时间显示 (2026.05.30 23:33:33)
+    function formatFullDateTime(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      const hours = String(d.getHours()).padStart(2,'0');
+      const minutes = String(d.getMinutes()).padStart(2,'0');
+      const seconds = String(d.getSeconds()).padStart(2,'0');
+      return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    // 判断两个时间是否同一天 (用于决定是否显示横条)
+    function isSameDay(date1, date2) {
+      if (!date1 || !date2) return true;
+      const d1 = new Date(date1);
+      const d2 = new Date(date2);
+      return d1.getFullYear() === d2.getFullYear() &&
+             d1.getMonth() === d2.getMonth() &&
+             d1.getDate() === d2.getDate();
+    }
+
     async function loadMessages() {
       if (!authActive) return;
       try {
@@ -649,19 +634,32 @@
           messagesArea.innerHTML = '<div style="text-align:center;color:#94a3b8;margin-top:30px;">💬 还没有消息，发一条吧</div>';
           return;
         }
+
         let html = '';
-        msgs.forEach(m => {
-          const sender = m.sender === 'boy' ? '我' : '她';
-          const cls = m.sender === 'boy' ? 'msg-boy' : 'msg-girl';
+        let lastDate = null;
+
+        msgs.forEach((m, index) => {
+          const msgDate = m.time || m.created_at || null;
+          // 如果当前消息与上一条消息不在同一天，插入时间横条
+          if (msgDate && !isSameDay(lastDate, msgDate)) {
+            html += `<div class="time-divider"><span>${formatFullDateTime(msgDate)}</span></div>`;
+          }
+          lastDate = msgDate;
+
+          const senderName = m.sender === '0213' || m.sender === 'boy' ? '0213' : '开心';
+          const cls = (m.sender === '0213' || m.sender === 'boy') ? 'msg-0213' : 'msg-开心';
           html += `<div class="message-bubble ${cls}">
-            <div class="msg-sender">${sender}</div>
+            <div class="msg-sender">${senderName}</div>
             <div>${escapeHtml(m.text)}</div>
             <div class="msg-time">${m.time || ''}</div>
           </div>`;
         });
+
         messagesArea.innerHTML = html;
         messagesArea.scrollTop = messagesArea.scrollHeight;
-      } catch (e) {}
+      } catch (e) {
+        console.log('加载消息失败', e);
+      }
     }
 
     function escapeHtml(text) {
@@ -680,14 +678,10 @@
       }, 15000);
     }
 
-    // ===== 长按触发私密入口 =====
+    // 长按触发
     let pressTimer = null;
-    const longPressDuration = 800;
-
     function startLongPress(e) {
-      // 只允许在计算器显示区域或屏幕顶部区域触发
-      const target = e.target;
-      if (target.closest('.calc-btn') || target.closest('.calc-display') || target.closest('.calculator-fullscreen') || target.closest('.secret-hint')) {
+      if (e.target.closest('.calc-btn') || e.target.closest('.calc-display') || e.target.closest('.calculator-fullscreen') || e.target.closest('.secret-hint')) {
         pressTimer = setTimeout(() => {
           if (authActive) {
             chatPanel.style.display = 'flex';
@@ -695,30 +689,21 @@
           } else {
             showLogin();
           }
-        }, longPressDuration);
+        }, 800);
       }
     }
-
     function cancelLongPress() {
-      if (pressTimer) {
-        clearTimeout(pressTimer);
-        pressTimer = null;
-      }
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
     }
 
-    // 绑定事件到计算器UI
     calculatorUI.addEventListener('touchstart', startLongPress, {passive: false});
     calculatorUI.addEventListener('touchend', cancelLongPress);
     calculatorUI.addEventListener('touchmove', cancelLongPress);
     calculatorUI.addEventListener('mousedown', startLongPress);
     window.addEventListener('mouseup', cancelLongPress);
 
-    // 初始状态：未登录，但计算器正常显示
-    // 如果之前有登录状态可自行调整，这里默认未登录
     loginOverlay.classList.add('hidden');
     chatPanel.style.display = 'none';
-
-    // 防止页面意外刷新导致状态丢失，简单处理
   })();
 </script>
 </body>
