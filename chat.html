@@ -510,7 +510,7 @@
     renderCalcButtons();
     updateDisplay();
 
-    // ---------- 聊天模块（含日期显示 & 滚动保持）----------
+    // ---------- 聊天模块（完全基于 full_time 字段）----------
     const chatPanel = document.getElementById('chatPanel');
     const loginOverlay = document.getElementById('loginOverlay');
     const messagesArea = document.getElementById('messagesArea');
@@ -527,7 +527,7 @@
     let autoScrollEnabled = true;
     let scrollDebounce = null;
 
-    // 日期时间格式化（保证显示）
+    // 日期时间格式化（基于完整 ISO 字符串）
     function formatDateDivider(isoString) {
       if (!isoString) return '';
       const d = new Date(isoString);
@@ -584,15 +584,16 @@
         let html = '';
         let lastDate = null;
         for (let m of msgs) {
-          const rawTime = m.time || m.created_at;
-          if (rawTime && !isSameDay(lastDate, rawTime)) {
-            html += `<div class="time-divider"><span>${formatDateDivider(rawTime)}</span></div>`;
+          // 使用后端返回的 full_time 字段（一定是完整 ISO 字符串）
+          const fullTime = m.full_time;
+          if (fullTime && !isSameDay(lastDate, fullTime)) {
+            html += `<div class="time-divider"><span>${formatDateDivider(fullTime)}</span></div>`;
           }
-          lastDate = rawTime;
+          lastDate = fullTime;
 
           const senderName = (m.sender === '0213' || m.sender === 'boy') ? '0213' : '开心';
           const bubbleClass = (m.sender === '0213' || m.sender === 'boy') ? 'msg-0213' : 'msg-开心';
-          const timeStr = formatTimeOnly(rawTime);
+          const timeStr = formatTimeOnly(fullTime);
           html += `<div class="message-bubble ${bubbleClass}">
             <div class="msg-sender">${senderName}</div>
             <div>${escapeHtml(m.text)}</div>
