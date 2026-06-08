@@ -1,481 +1,795 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>计算器</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>计算器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            padding: 16px;
-        }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b0b12;
+      font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+    }
 
-        .app-container {
-            width: 100%;
-            max-width: 400px;
-            background: rgba(30, 30, 46, 0.6);
-            backdrop-filter: blur(20px);
-            border-radius: 48px;
-            padding: 20px;
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+    /* 主容器 - 完全铺满手机全屏 */
+    .app-container {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+      background: radial-gradient(circle at 20% 20%, #1e1e2f, #0a0a14);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-        .calc-screen {
-            background: rgba(10, 10, 18, 0.8);
-            border-radius: 32px;
-            padding: 24px 20px;
-            margin-bottom: 20px;
-            text-align: right;
-            font-size: 48px;
-            font-weight: 500;
-            color: #4ade80;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
-            word-break: break-all;
-            min-height: 100px;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(74, 222, 128, 0.3);
-        }
+    /* 计算器风格（伪装主界面）*/
+    .calculator-fullscreen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 16px 24px;
+      background: linear-gradient(145deg, #1a1a28 0%, #0f0f1a 100%);
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+    }
 
-        .calc-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
+    .calc-display {
+      background: #0c0c16;
+      border-radius: 32px;
+      margin-bottom: 20px;
+      padding: 20px 20px;
+      box-shadow: inset 0 8px 16px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.08);
+      flex: 0 0 auto;
+      min-height: 110px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+    }
 
-        .calc-btn {
-            background: rgba(45, 45, 58, 0.9);
-            padding: 20px 0;
-            text-align: center;
-            border-radius: 28px;
-            font-size: 24px;
-            font-weight: 600;
-            color: #e2e8f0;
-            cursor: pointer;
-            transition: all 0.1s ease;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
+    .calc-display .expression {
+      color: #7f8c9a;
+      font-size: 18px;
+      font-family: 'Fira Code', monospace;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      opacity: 0.8;
+    }
 
-        .calc-btn:active { transform: scale(0.96); background: rgba(55, 55, 75, 0.9); }
-        .calc-btn.operator { background: rgba(59, 130, 246, 0.7); color: white; }
-        .calc-btn.equals { background: rgba(74, 222, 128, 0.8); color: white; }
-        .calc-btn.clear { background: rgba(239, 68, 68, 0.7); color: white; }
+    .calc-display .result {
+      color: #4ade80;
+      font-size: 48px;
+      font-weight: 600;
+      font-family: 'Fira Code', 'JetBrains Mono', monospace;
+      text-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
+      line-height: 1.1;
+      word-break: break-all;
+      text-align: right;
+      width: 100%;
+    }
 
-        .chat-area {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
-            border-radius: 32px;
-            margin-top: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-        }
+    .calc-buttons-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
 
-        .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            background: rgba(30, 41, 59, 0.6);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
+    .calc-btn {
+      background: #252537;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 500;
+      color: #e2e8f0;
+      box-shadow: 0 6px 0 #15151f, 0 8px 16px rgba(0,0,0,0.5);
+      transition: all 0.08s ease;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(4px);
+    }
 
-        .chat-title { font-weight: 600; color: #cbd5e1; font-size: 15px; }
-        .chat-status { font-size: 12px; padding: 4px 12px; background: rgba(74, 222, 128, 0.2); border-radius: 30px; color: #4ade80; }
-        .close-chat, .logout-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: #94a3b8;
-            font-size: 20px;
-            width: 32px;
-            height: 32px;
-            border-radius: 30px;
-            cursor: pointer;
-            margin-left: 8px;
-        }
-        .logout-btn { background: rgba(239, 68, 68, 0.7); color: white; font-size: 13px; width: auto; padding: 0 12px; }
+    .calc-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #0f0f18, 0 4px 10px rgba(0,0,0,0.6);
+      background: #313148;
+    }
 
-        .messages-container {
-            height: 380px;
-            overflow-y: auto;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+    .calc-btn.operator {
+      background: #3d3d5a;
+      color: #ffb347;
+      font-weight: 600;
+      border: 1px solid rgba(255,179,71,0.2);
+    }
 
-        .message {
-            display: flex;
-            flex-direction: column;
-            max-width: 85%;
-        }
-        .message.my { align-self: flex-end; }
-        .message.other { align-self: flex-start; }
+    .calc-btn.clear {
+      background: #4a2e3a;
+      color: #ff7b7b;
+      font-weight: 600;
+    }
 
-        .bubble {
-            padding: 12px 16px;
-            border-radius: 24px;
-            word-break: break-word;
-            font-size: 15px;
-            line-height: 1.4;
-        }
-        .message.my .bubble {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border-bottom-right-radius: 6px;
-        }
-        .message.other .bubble {
-            background: rgba(51, 65, 85, 0.9);
-            color: #f1f5f9;
-            border-bottom-left-radius: 6px;
-        }
+    .calc-btn.equals {
+      background: #2e5a4a;
+      color: #4ade80;
+      font-weight: 700;
+    }
 
-        .message-name {
-            font-size: 11px;
-            margin-bottom: 4px;
-            margin-left: 8px;
-            color: #94a3b8;
-        }
-        .message.my .message-name { text-align: right; margin-right: 8px; }
-        .message-time {
-            font-size: 10px;
-            margin-top: 4px;
-            margin-left: 12px;
-            color: #64748b;
-        }
-        .message.my .message-time { text-align: right; margin-right: 12px; }
+    .secret-hint {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      color: rgba(255,255,255,0.25);
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,0,0,0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
 
-        .input-area {
-            display: flex;
-            gap: 12px;
-            padding: 16px;
-            background: rgba(30, 41, 59, 0.4);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .input-area input {
-            flex: 1;
-            padding: 14px 18px;
-            border: none;
-            border-radius: 40px;
-            background: rgba(15, 23, 42, 0.9);
-            color: #f1f5f9;
-            font-size: 15px;
-            outline: none;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .input-area input:focus { border-color: #10b981; }
-        .input-area button {
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: none;
-            padding: 0 24px;
-            border-radius: 40px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .input-area button:active { transform: scale(0.96); }
+    /* 聊天面板 */
+    .chat-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0f172a;
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.98);
+    }
 
-        .error-msg { color: #ef4444; font-size: 12px; text-align: center; margin-top: 8px; }
-        .login-hint { text-align: center; margin-top: 8px; color: #64748b; font-size: 12px; }
-        .date-separator {
-            text-align: center;
-            font-size: 11px;
-            color: #94a3b8;
-            margin: 8px 0;
-            position: relative;
-        }
-        .date-separator span {
-            background: rgba(30, 41, 59, 0.6);
-            padding: 4px 12px;
-            border-radius: 30px;
-        }
-    </style>
+    .chat-header {
+      background: #1e293b;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      font-weight: 600;
+      font-size: 20px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .chat-header .close-btn {
+      font-size: 28px;
+      cursor: pointer;
+      color: #94a3b8;
+      padding: 8px;
+      border-radius: 16px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chat-header .close-btn:active {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #0b1120;
+    }
+
+    /* 微信风格时间横条 - 优化日期显示 */
+    .time-divider {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 12px 0 8px 0;
+    }
+
+    .time-divider span {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      color: #cbd5e1;
+      font-size: 12px;
+      padding: 5px 16px;
+      border-radius: 30px;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+      font-family: monospace;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .message-bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 22px;
+      font-size: 15px;
+      line-height: 1.45;
+      word-break: break-word;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .msg-0213 {
+      background: #2563eb;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 6px;
+      margin-left: auto;
+    }
+
+    .msg-开心 {
+      background: #10b981;
+      color: white;
+      align-self: flex-start;
+      border-bottom-left-radius: 6px;
+      margin-right: auto;
+    }
+
+    .msg-sender {
+      font-weight: 700;
+      font-size: 12px;
+      margin-bottom: 5px;
+      opacity: 0.9;
+      letter-spacing: 0.3px;
+    }
+
+    .msg-time {
+      font-size: 10px;
+      opacity: 0.7;
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 16px;
+      gap: 10px;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      align-items: center;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 40px;
+      border: none;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+      outline: none;
+      border: 1px solid #334155;
+    }
+
+    .input-area input:focus {
+      border-color: #3b82f6;
+    }
+
+    .input-area button {
+      background: #3b82f6;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 40px;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(59,130,246,0.4);
+      transition: all 0.1s;
+    }
+
+    .input-area button:active {
+      background: #2563eb;
+      transform: scale(0.96);
+    }
+
+    .login-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+    }
+
+    .login-dialog {
+      background: #1e293b;
+      padding: 28px 24px;
+      border-radius: 36px;
+      width: 300px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      border: 1px solid #334155;
+    }
+
+    .login-dialog h3 {
+      color: white;
+      margin-bottom: 20px;
+      font-size: 22px;
+      text-align: center;
+    }
+
+    .login-dialog input {
+      width: 100%;
+      padding: 14px 16px;
+      margin: 12px 0;
+      border-radius: 30px;
+      border: none;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+      border: 1px solid #475569;
+    }
+
+    .login-dialog button {
+      width: 100%;
+      padding: 14px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 16px;
+      cursor: pointer;
+    }
+
+    .error-text {
+      color: #ff6b6b;
+      margin-top: 12px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .messages-container::-webkit-scrollbar {
+      width: 4px;
+    }
+    .messages-container::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .messages-container::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
-<div class="app-container">
-    <div class="calc-screen" id="calcScreen">0</div>
-    <div class="calc-buttons">
-        <div class="calc-btn" data-val="7">7</div><div class="calc-btn" data-val="8">8</div><div class="calc-btn" data-val="9">9</div><div class="calc-btn operator" data-val="/">÷</div>
-        <div class="calc-btn" data-val="4">4</div><div class="calc-btn" data-val="5">5</div><div class="calc-btn" data-val="6">6</div><div class="calc-btn operator" data-val="*">×</div>
-        <div class="calc-btn" data-val="1">1</div><div class="calc-btn" data-val="2">2</div><div class="calc-btn" data-val="3">3</div><div class="calc-btn operator" data-val="-">-</div>
-        <div class="calc-btn" data-val="0">0</div><div class="calc-btn clear" data-val="C">C</div><div class="calc-btn equals" data-val="=">=</div><div class="calc-btn operator" data-val="+">+</div>
+<div class="app-container" id="appContainer">
+  <!-- 伪装计算器 -->
+  <div class="calculator-fullscreen" id="calculatorUI">
+    <div class="secret-hint">
+      <span>🔒 长按屏幕上方</span>
     </div>
-
-    <div id="loginHint" class="login-hint">输入密码后按「=」登录</div>
-    <div id="loginError" class="error-msg"></div>
-
-    <div id="chatArea" class="chat-area" style="display: none;">
-        <div class="chat-header">
-            <span class="chat-title">💬 备忘录</span>
-            <span id="onlineStatus" class="chat-status">在线</span>
-            <div style="display: flex;">
-                <button id="logoutMiniBtn" class="logout-btn">退出</button>
-                <button id="closeChatBtn" class="close-chat">✕</button>
-            </div>
-        </div>
-        <div class="messages-container" id="messagesContainer">
-            <div style="text-align: center; color: #64748b; padding: 40px;">加载中...</div>
-        </div>
-        <div class="input-area">
-            <input type="text" id="messageInput" placeholder="写点什么..." autocomplete="off">
-            <button id="sendMsgBtn">发送</button>
-        </div>
+    <div class="calc-display">
+      <div class="expression" id="calcExpression"></div>
+      <div class="result" id="calcResult">0</div>
     </div>
+    <div class="calc-buttons-grid" id="calcButtons"></div>
+  </div>
+
+  <!-- 聊天面板 -->
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+      <span>📝 我们的备忘录</span>
+      <span class="close-btn" id="closeChatBtn">✕</span>
+    </div>
+    <div class="messages-container" id="messagesArea">
+      <div style="text-align:center;color:#888;margin-top:40px;">✨ 连接中...</div>
+    </div>
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="写一句悄悄话..." autocomplete="off">
+      <button id="sendMessageBtn">发送</button>
+    </div>
+  </div>
+
+  <!-- 登录遮罩（初始隐藏） -->
+  <div class="login-overlay hidden" id="loginOverlay">
+    <div class="login-dialog">
+      <h3>验证</h3>
+      <input type="password" id="passwordInput" placeholder="输入密码" autocomplete="off">
+      <button id="loginSubmitBtn">进入空间</button>
+      <div class="error-text" id="loginError"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-    // ---------- 计算器逻辑 ----------
-    let calcValue = '0';
-    let lastOperator = null;
-    let pendingValue = null;
-    const calcScreen = document.getElementById('calcScreen');
-    function updateCalcScreen() { calcScreen.innerText = calcValue; }
+  (function() {
+    // ========== 计算器逻辑 ==========
+    let currentInput = '0';
+    let previousInput = '';
+    let operation = null;
+    let shouldResetScreen = false;
 
-    function handleCalcInput(val) {
-        document.getElementById('loginError').innerText = '';
-        if (val === 'C') {
-            calcValue = '0'; lastOperator = null; pendingValue = null;
-            updateCalcScreen();
-        } else if (val === '=') {
-            const pwd = calcValue.trim();
-            if (pwd && !authActive) doLogin(pwd);
-            else if (authActive && lastOperator && pendingValue !== null) {
-                const cur = parseFloat(calcValue);
-                let result;
-                if (lastOperator === '+') result = pendingValue + cur;
-                else if (lastOperator === '-') result = pendingValue - cur;
-                else if (lastOperator === '*') result = pendingValue * cur;
-                else if (lastOperator === '/') result = pendingValue / cur;
-                calcValue = String(result);
-                lastOperator = null; pendingValue = null;
-                updateCalcScreen();
-            }
-        } else if (['+','-','*','/'].includes(val) && authActive) {
-            if (lastOperator && pendingValue !== null) {
-                const cur = parseFloat(calcValue);
-                let result;
-                if (lastOperator === '+') result = pendingValue + cur;
-                else if (lastOperator === '-') result = pendingValue - cur;
-                else if (lastOperator === '*') result = pendingValue * cur;
-                else if (lastOperator === '/') result = pendingValue / cur;
-                calcValue = String(result);
-                updateCalcScreen();
-            }
-            pendingValue = parseFloat(calcValue);
-            lastOperator = val;
-            calcValue = '0';
-            updateCalcScreen();
-        } else {
-            if (calcValue === '0') calcValue = val;
-            else calcValue += val;
-            updateCalcScreen();
-        }
-    }
+    const calcResultEl = document.getElementById('calcResult');
+    const calcExpressionEl = document.getElementById('calcExpression');
+    const calcButtonsGrid = document.getElementById('calcButtons');
 
-    document.querySelectorAll('.calc-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const v = btn.dataset.val;
-            if (v) handleCalcInput(v);
+    const buttons = [
+      ['C', '⌫', '%', '/'],
+      ['7', '8', '9', '*'],
+      ['4', '5', '6', '-'],
+      ['1', '2', '3', '+'],
+      ['0', '.', '=', '']
+    ];
+
+    function renderCalcButtons() {
+      calcButtonsGrid.innerHTML = '';
+      buttons.forEach(row => {
+        row.forEach(btn => {
+          if (btn === '') return;
+          const buttonDiv = document.createElement('div');
+          buttonDiv.className = 'calc-btn';
+          if (btn === 'C') buttonDiv.classList.add('clear');
+          if (['/','*','-','+','%'].includes(btn)) buttonDiv.classList.add('operator');
+          if (btn === '=') buttonDiv.classList.add('equals');
+          buttonDiv.textContent = btn;
+          buttonDiv.dataset.action = btn;
+          buttonDiv.addEventListener('click', () => handleCalcAction(btn));
+          calcButtonsGrid.appendChild(buttonDiv);
         });
-    });
+      });
+    }
 
-    // ---------- 聊天逻辑 ----------
-    let authActive = false;
-    let myRole = null;
-    let refreshInterval = null;
-    let heartbeatInterval = null;
-    let lastMessagesHash = '';      // 用于避免无变化时重绘
-    let currentScrollPos = 0;      // 保存滚动位置
+    function updateCalcDisplay() {
+      calcResultEl.textContent = currentInput;
+      calcExpressionEl.textContent = operation && previousInput ? `${previousInput} ${operation}` : '';
+    }
 
-    const chatArea = document.getElementById('chatArea');
-    const messagesContainer = document.getElementById('messagesContainer');
+    function handleCalcAction(action) {
+      if (action >= '0' && action <= '9' || action === '.') {
+        if (shouldResetScreen) {
+          currentInput = action;
+          shouldResetScreen = false;
+        } else {
+          if (action === '.' && currentInput.includes('.')) return;
+          currentInput = currentInput === '0' && action !== '.' ? action : currentInput + action;
+        }
+      } else if (action === 'C') {
+        currentInput = '0'; previousInput = ''; operation = null; shouldResetScreen = false;
+      } else if (action === '⌫') {
+        currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : '0';
+      } else if (action === '%') {
+        currentInput = String(parseFloat(currentInput) / 100);
+      } else if (['+','-','*','/'].includes(action)) {
+        if (operation && !shouldResetScreen) {
+          currentInput = calculate(previousInput, currentInput, operation);
+        }
+        previousInput = currentInput;
+        operation = action;
+        shouldResetScreen = true;
+      } else if (action === '=') {
+        if (operation && previousInput) {
+          currentInput = calculate(previousInput, currentInput, operation);
+          previousInput = ''; operation = null; shouldResetScreen = true;
+        }
+      }
+      updateCalcDisplay();
+    }
+
+    function calculate(a, b, op) {
+      const numA = parseFloat(a), numB = parseFloat(b);
+      if (isNaN(numA) || isNaN(numB)) return '0';
+      let result;
+      switch(op) {
+        case '+': result = numA + numB; break;
+        case '-': result = numA - numB; break;
+        case '*': result = numA * numB; break;
+        case '/': result = numB !== 0 ? numA / numB : '错误'; break;
+        default: return b;
+      }
+      return result === '错误' ? '错误' : String(Math.round(result * 1000000) / 1000000);
+    }
+
+    renderCalcButtons();
+    updateCalcDisplay();
+
+    // ========== 聊天模块 - 修复滚动重置 & 日期显示，且初始不弹登录 ==========
+    const calculatorUI = document.getElementById('calculatorUI');
+    const chatPanel = document.getElementById('chatPanel');
+    const loginOverlay = document.getElementById('loginOverlay');
+    const messagesArea = document.getElementById('messagesArea');
     const messageInput = document.getElementById('messageInput');
-    const sendMsgBtn = document.getElementById('sendMsgBtn');
+    const sendBtn = document.getElementById('sendMessageBtn');
     const closeChatBtn = document.getElementById('closeChatBtn');
-    const logoutMiniBtn = document.getElementById('logoutMiniBtn');
-    const loginHintDiv = document.getElementById('loginHint');
-    const onlineStatusSpan = document.getElementById('onlineStatus');
+    const passwordInput = document.getElementById('passwordInput');
+    const loginSubmit = document.getElementById('loginSubmitBtn');
+    const loginError = document.getElementById('loginError');
 
-    // 工具函数：将后端时间字符串转为本地时间对象
-    function parseTimeString(timeStr) {
-        // 旧格式 "HH:MM:SS" (UTC)
-        if (/^\d{2}:\d{2}:\d{2}$/.test(timeStr)) {
-            const [h,m,s] = timeStr.split(':').map(Number);
-            const now = new Date();
-            const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), h, m, s));
-            return utcDate;
+    let authActive = false;
+    let myRole = '0213';
+    let refreshTimer = null;
+    let heartbeatTimer = null;
+
+    // 滚动行为控制
+    let autoScrollEnabled = true;
+    let scrollDebounce = null;
+
+    function handleScroll() {
+      if (!messagesArea) return;
+      if (scrollDebounce) clearTimeout(scrollDebounce);
+      scrollDebounce = setTimeout(() => {
+        const scrollTop = messagesArea.scrollTop;
+        const scrollHeight = messagesArea.scrollHeight;
+        const clientHeight = messagesArea.clientHeight;
+        const isNearBottom = scrollHeight - (scrollTop + clientHeight) < 30;
+        autoScrollEnabled = isNearBottom;
+      }, 120);
+    }
+
+    messagesArea.addEventListener('scroll', handleScroll, { passive: true });
+
+    function scrollToBottom() {
+      if (!messagesArea) return;
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+      autoScrollEnabled = true;
+    }
+
+    // 显示登录面板（长按时调用）
+    function showLogin() {
+      loginOverlay.classList.remove('hidden');
+      chatPanel.style.display = 'none';
+      passwordInput.value = '';
+      loginError.textContent = '';
+    }
+
+    function openChat() {
+      loginOverlay.classList.add('hidden');
+      chatPanel.style.display = 'flex';
+      autoScrollEnabled = true;
+      loadMessages().then(() => {
+        scrollToBottom();
+      });
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => {
+        if (authActive && chatPanel.style.display === 'flex') {
+          loadMessages().catch(e => console.log(e));
         }
-        // 新格式 ISO 字符串
-        return new Date(timeStr);
+      }, 4000);
+      startHeartbeat();
     }
 
-    // 格式化显示时间：同一天显示 "HH:MM"，不同天显示 "MM/DD HH:MM"
-    function formatMessageTime(isoOrTimeStr) {
-        const date = parseTimeString(isoOrTimeStr);
-        if (isNaN(date.getTime())) return isoOrTimeStr;
-        const now = new Date();
-        const isToday = date.toDateString() === now.toDateString();
-        const hours = date.getHours().toString().padStart(2,'0');
-        const minutes = date.getMinutes().toString().padStart(2,'0');
-        if (isToday) return `${hours}:${minutes}`;
-        const month = (date.getMonth()+1).toString().padStart(2,'0');
-        const day = date.getDate().toString().padStart(2,'0');
-        return `${month}/${day} ${hours}:${minutes}`;
-    }
-
-    // 获取消息的日期键 (YYYY-MM-DD) 用于分组
-    function getDateKey(timeStr) {
-        const date = parseTimeString(timeStr);
-        if (isNaN(date.getTime())) return '';
-        return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`;
-    }
-
-    // 渲染消息列表（保留滚动位置，仅在内容变化时重绘）
-    async function loadMessages(keepScroll = true) {
-        if (!authActive) return;
-        try {
-            const resp = await fetch('/messages');
-            if (resp.status === 401) { logout(); return; }
-            const msgs = await resp.json();
-            if (!msgs || msgs.length === 0) {
-                if (messagesContainer.innerHTML !== '<div style="text-align:center; color:#64748b; padding:40px;">✨ 暂无消息，发点什么吧</div>') {
-                    messagesContainer.innerHTML = '<div style="text-align:center; color:#64748b; padding:40px;">✨ 暂无消息，发点什么吧</div>';
-                }
-                return;
-            }
-
-            // 生成 hash 判断消息是否有变化
-            const newHash = JSON.stringify(msgs.map(m => ({text:m.text, sender:m.sender, time:m.time})));
-            if (newHash === lastMessagesHash && keepScroll) return;
-            lastMessagesHash = newHash;
-
-            // 保存当前滚动位置
-            if (keepScroll) currentScrollPos = messagesContainer.scrollTop;
-
-            // 按日期分组
-            let lastDate = '';
-            let html = '';
-            for (let i = 0; i < msgs.length; i++) {
-                const msg = msgs[i];
-                const dateKey = getDateKey(msg.time);
-                if (dateKey && dateKey !== lastDate) {
-                    if (lastDate !== '') html += '</div>';
-                    const displayDate = new Date(dateKey).toLocaleDateString('zh-CN', { month:'numeric', day:'numeric' });
-                    html += `<div class="date-separator"><span>${displayDate}</span></div>`;
-                    lastDate = dateKey;
-                }
-                const isMe = (myRole === 'boy' && msg.sender === 'boy') || (myRole === 'girl' && msg.sender === 'girl');
-                const senderName = msg.sender === 'boy' ? '我' : '她';
-                const alignClass = isMe ? 'my' : 'other';
-                const displayTime = formatMessageTime(msg.time);
-                html += `
-                    <div class="message ${alignClass}">
-                        <div class="message-name">${senderName}</div>
-                        <div class="bubble">${escapeHtml(msg.text)}</div>
-                        <div class="message-time">${displayTime}</div>
-                    </div>
-                `;
-            }
-            messagesContainer.innerHTML = html;
-
-            // 恢复滚动位置
-            if (keepScroll) messagesContainer.scrollTop = currentScrollPos;
-        } catch (err) { console.log('加载消息失败', err); }
-    }
-
-    async function sendMessage() {
-        const text = messageInput.value.trim();
-        if (!text) return;
-        try {
-            const resp = await fetch('/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text })
-            });
-            if (resp.status === 401) { logout(); return; }
-            messageInput.value = '';
-            // 发送后强制刷新并滚动到底部（新消息）
-            await loadMessages(false);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            lastMessagesHash = ''; // 强制下次刷新重新计算hash
-        } catch (err) { alert('发送失败'); }
-    }
-
-    async function doLogin(password) {
-        try {
-            const resp = await fetch('/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
-            });
-            const data = await resp.json();
-            if (resp.ok && data.status === 'ok') {
-                authActive = true;
-                myRole = data.role;
-                loginHintDiv.style.display = 'none';
-                chatArea.style.display = 'block';
-                onlineStatusSpan.innerText = myRole === 'boy' ? '我 在线' : '她 在线';
-                calcValue = '0'; updateCalcScreen();
-                await loadMessages(false);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                if (refreshInterval) clearInterval(refreshInterval);
-                refreshInterval = setInterval(() => loadMessages(true), 4000);
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
-                heartbeatInterval = setInterval(checkHeartbeat, 15000);
-            } else {
-                document.getElementById('loginError').innerText = '密码错误，试试 0708 或 0213';
-                calcValue = '0'; updateCalcScreen();
-            }
-        } catch (err) {
-            document.getElementById('loginError').innerText = '网络错误';
-        }
-    }
-
-    async function checkHeartbeat() {
-        if (!authActive) return;
-        try {
-            const resp = await fetch('/check_auth');
-            const data = await resp.json();
-            if (!data.valid) { alert('会话已过期'); logout(); }
-        } catch(e) {}
+    function closeChat() {
+      chatPanel.style.display = 'none';
+      if (refreshTimer) clearInterval(refreshTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
     }
 
     function logout() {
-        authActive = false;
-        if (refreshInterval) clearInterval(refreshInterval);
-        if (heartbeatInterval) clearInterval(heartbeatInterval);
-        chatArea.style.display = 'none';
-        loginHintDiv.style.display = 'block';
-        document.getElementById('loginError').innerText = '';
-        messagesContainer.innerHTML = '<div style="text-align:center; color:#64748b; padding:40px;">加载中...</div>';
-        localStorage.clear(); sessionStorage.clear();
-        calcValue = '0'; updateCalcScreen();
-        lastMessagesHash = '';
+      authActive = false;
+      closeChat();
+      // 不自动弹出登录，而是隐藏聊天、保留计算器
+      loginOverlay.classList.add('hidden');
+      if (refreshTimer) clearInterval(refreshTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
     }
 
-    sendMsgBtn.onclick = sendMessage;
-    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-    closeChatBtn.onclick = () => { chatArea.style.display = 'none'; loginHintDiv.style.display = 'block'; };
-    logoutMiniBtn.onclick = logout;
-
-    function escapeHtml(str) {
-        return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+    // 日期与时间格式化
+    function formatDateOnly(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      const weekday = weekdays[d.getDay()];
+      return `${year}年${month}月${day}日 ${weekday}`;
     }
+
+    function formatMessageTime(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      const hours = String(d.getHours()).padStart(2,'0');
+      const minutes = String(d.getMinutes()).padStart(2,'0');
+      const seconds = String(d.getSeconds()).padStart(2,'0');
+      return `${hours}:${minutes}:${seconds}`;
+    }
+
+    function isSameDay(date1, date2) {
+      if (!date1 || !date2) return true;
+      const d1 = new Date(date1);
+      const d2 = new Date(date2);
+      return d1.getFullYear() === d2.getFullYear() &&
+             d1.getMonth() === d2.getMonth() &&
+             d1.getDate() === d2.getDate();
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+    }
+
+    let isLoadingMessages = false;
+    async function loadMessages() {
+      if (!authActive) return;
+      if (isLoadingMessages) return;
+      isLoadingMessages = true;
+
+      const prevScrollTop = messagesArea.scrollTop;
+      const prevScrollHeight = messagesArea.scrollHeight;
+      const wasAutoScroll = autoScrollEnabled;
+
+      try {
+        const resp = await fetch('/messages');
+        if (resp.status === 401) { logout(); isLoadingMessages = false; return; }
+        const msgs = await resp.json();
+        if (!msgs || msgs.length === 0) {
+          messagesArea.innerHTML = '<div style="text-align:center;color:#94a3b8;margin-top:30px;">💬 还没有消息，发一条吧</div>';
+          isLoadingMessages = false;
+          return;
+        }
+
+        let html = '';
+        let lastDate = null;
+        msgs.forEach((m) => {
+          const msgTimeRaw = m.time || m.created_at || null;
+          if (msgTimeRaw && !isSameDay(lastDate, msgTimeRaw)) {
+            const dateTitle = formatDateOnly(msgTimeRaw);
+            html += `<div class="time-divider"><span>${dateTitle}</span></div>`;
+          }
+          lastDate = msgTimeRaw;
+
+          const senderName = (m.sender === '0213' || m.sender === 'boy') ? '0213' : '开心';
+          const cls = (m.sender === '0213' || m.sender === 'boy') ? 'msg-0213' : 'msg-开心';
+          const displayTime = formatMessageTime(msgTimeRaw);
+          html += `<div class="message-bubble ${cls}">
+            <div class="msg-sender">${senderName}</div>
+            <div>${escapeHtml(m.text)}</div>
+            <div class="msg-time">${displayTime}</div>
+          </div>`;
+        });
+
+        messagesArea.innerHTML = html;
+
+        if (wasAutoScroll) {
+          scrollToBottom();
+        } else {
+          const newScrollHeight = messagesArea.scrollHeight;
+          const heightDiff = newScrollHeight - prevScrollHeight;
+          if (heightDiff > 0) {
+            messagesArea.scrollTop = prevScrollTop + heightDiff;
+          } else {
+            messagesArea.scrollTop = prevScrollTop;
+          }
+          if (messagesArea.scrollTop < 0) messagesArea.scrollTop = 0;
+        }
+      } catch (e) {
+        console.warn('加载消息失败', e);
+      } finally {
+        isLoadingMessages = false;
+      }
+    }
+
+    loginSubmit.addEventListener('click', async () => {
+      const pwd = passwordInput.value.trim();
+      if (!pwd) { loginError.textContent = '请输入密码'; return; }
+      loginError.textContent = '验证中...';
+      try {
+        const resp = await fetch('/auth', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.status === 'ok') {
+          authActive = true;
+          myRole = data.role === 'boy' ? '0213' : (data.role === 'girl' ? '开心' : '0213');
+          openChat();
+        } else {
+          loginError.textContent = '密码错误';
+        }
+      } catch (err) {
+        loginError.textContent = '网络异常';
+      }
+    });
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !authActive) return;
+      try {
+        const resp = await fetch('/messages', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ text: text })
+        });
+        if (resp.status === 401) { logout(); return; }
+        messageInput.value = '';
+        autoScrollEnabled = true;
+        await loadMessages();
+        scrollToBottom();
+      } catch (e) {
+        alert('发送失败');
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+    closeChatBtn.addEventListener('click', closeChat);
+
+    function startHeartbeat() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      heartbeatTimer = setInterval(async () => {
+        if (!authActive) return;
+        try {
+          const resp = await fetch('/check_auth');
+          const data = await resp.json();
+          if (!data.valid) { alert('会话过期，请重新登录'); logout(); }
+        } catch(e) {}
+      }, 15000);
+    }
+
+    // 长按触发登录/聊天（伪装计算器长按）
+    let pressTimer = null;
+    function startLongPress(e) {
+      if (e.target.closest('.calc-btn') || e.target.closest('.calc-display') || e.target.closest('.calculator-fullscreen') || e.target.closest('.secret-hint')) {
+        pressTimer = setTimeout(() => {
+          if (authActive) {
+            if (chatPanel.style.display !== 'flex') {
+              chatPanel.style.display = 'flex';
+              loadMessages().then(() => scrollToBottom());
+              if (!refreshTimer) {
+                refreshTimer = setInterval(() => {
+                  if (authActive && chatPanel.style.display === 'flex') loadMessages();
+                }, 4000);
+              }
+            }
+          } else {
+            showLogin();  // 未登录则弹出验证框
+          }
+        }, 600);
+      }
+    }
+    function cancelLongPress() {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    }
+
+    calculatorUI.addEventListener('touchstart', startLongPress, {passive: false});
+    calculatorUI.addEventListener('touchend', cancelLongPress);
+    calculatorUI.addEventListener('touchmove', cancelLongPress);
+    calculatorUI.addEventListener('mousedown', startLongPress);
+    window.addEventListener('mouseup', cancelLongPress);
+
+    // 初始状态：登录遮罩隐藏，只显示计算器
+    loginOverlay.classList.add('hidden');
+    chatPanel.style.display = 'none';
+  })();
 </script>
 </body>
 </html>
