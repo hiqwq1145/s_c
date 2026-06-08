@@ -22,7 +22,6 @@
       font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    /* 主容器 - 完全铺满手机全屏 */
     .app-container {
       width: 100vw;
       height: 100vh;
@@ -34,7 +33,6 @@
       overflow: hidden;
     }
 
-    /* 计算器风格（伪装主界面）*/
     .calculator-fullscreen {
       width: 100%;
       height: 100%;
@@ -149,7 +147,6 @@
       z-index: 10;
     }
 
-    /* 聊天面板 */
     .chat-panel {
       position: absolute;
       top: 0;
@@ -203,7 +200,6 @@
       background: #0b1120;
     }
 
-    /* 微信风格时间横条 - 优化日期显示 */
     .time-divider {
       display: flex;
       justify-content: center;
@@ -388,8 +384,7 @@
   </style>
 </head>
 <body>
-<div class="app-container" id="appContainer">
-  <!-- 伪装计算器 -->
+<div class="app-container">
   <div class="calculator-fullscreen" id="calculatorUI">
     <div class="secret-hint">
       <span>🔒 长按屏幕上方</span>
@@ -401,14 +396,13 @@
     <div class="calc-buttons-grid" id="calcButtons"></div>
   </div>
 
-  <!-- 聊天面板 -->
   <div class="chat-panel" id="chatPanel">
     <div class="chat-header">
       <span>📝 我们的备忘录</span>
       <span class="close-btn" id="closeChatBtn">✕</span>
     </div>
     <div class="messages-container" id="messagesArea">
-      <div style="text-align:center;color:#888;margin-top:40px;">✨ 连接中...</div>
+      <div style="text-align:center;color:#94a3b8;margin-top:40px;">✨ 暂无消息</div>
     </div>
     <div class="input-area">
       <input type="text" id="messageInput" placeholder="写一句悄悄话..." autocomplete="off">
@@ -416,7 +410,6 @@
     </div>
   </div>
 
-  <!-- 登录遮罩（初始隐藏） -->
   <div class="login-overlay hidden" id="loginOverlay">
     <div class="login-dialog">
       <h3>验证</h3>
@@ -428,8 +421,8 @@
 </div>
 
 <script>
-  (function() {
-    // ========== 计算器逻辑 ==========
+  (function(){
+    // ---------- 计算器 ----------
     let currentInput = '0';
     let previousInput = '';
     let operation = null;
@@ -452,25 +445,38 @@
       buttons.forEach(row => {
         row.forEach(btn => {
           if (btn === '') return;
-          const buttonDiv = document.createElement('div');
-          buttonDiv.className = 'calc-btn';
-          if (btn === 'C') buttonDiv.classList.add('clear');
-          if (['/','*','-','+','%'].includes(btn)) buttonDiv.classList.add('operator');
-          if (btn === '=') buttonDiv.classList.add('equals');
-          buttonDiv.textContent = btn;
-          buttonDiv.dataset.action = btn;
-          buttonDiv.addEventListener('click', () => handleCalcAction(btn));
-          calcButtonsGrid.appendChild(buttonDiv);
+          const btnDiv = document.createElement('div');
+          btnDiv.className = 'calc-btn';
+          if (btn === 'C') btnDiv.classList.add('clear');
+          if (['/','*','-','+','%'].includes(btn)) btnDiv.classList.add('operator');
+          if (btn === '=') btnDiv.classList.add('equals');
+          btnDiv.textContent = btn;
+          btnDiv.addEventListener('click', () => handleCalc(btn));
+          calcButtonsGrid.appendChild(btnDiv);
         });
       });
     }
 
-    function updateCalcDisplay() {
+    function updateDisplay() {
       calcResultEl.textContent = currentInput;
       calcExpressionEl.textContent = operation && previousInput ? `${previousInput} ${operation}` : '';
     }
 
-    function handleCalcAction(action) {
+    function calculate(a, b, op) {
+      const numA = parseFloat(a), numB = parseFloat(b);
+      if (isNaN(numA) || isNaN(numB)) return '0';
+      let res;
+      switch(op){
+        case '+': res = numA + numB; break;
+        case '-': res = numA - numB; break;
+        case '*': res = numA * numB; break;
+        case '/': res = numB !== 0 ? numA / numB : '错误'; break;
+        default: return b;
+      }
+      return res === '错误' ? '错误' : String(Math.round(res * 1000000) / 1000000);
+    }
+
+    function handleCalc(action) {
       if (action >= '0' && action <= '9' || action === '.') {
         if (shouldResetScreen) {
           currentInput = action;
@@ -498,28 +504,13 @@
           previousInput = ''; operation = null; shouldResetScreen = true;
         }
       }
-      updateCalcDisplay();
-    }
-
-    function calculate(a, b, op) {
-      const numA = parseFloat(a), numB = parseFloat(b);
-      if (isNaN(numA) || isNaN(numB)) return '0';
-      let result;
-      switch(op) {
-        case '+': result = numA + numB; break;
-        case '-': result = numA - numB; break;
-        case '*': result = numA * numB; break;
-        case '/': result = numB !== 0 ? numA / numB : '错误'; break;
-        default: return b;
-      }
-      return result === '错误' ? '错误' : String(Math.round(result * 1000000) / 1000000);
+      updateDisplay();
     }
 
     renderCalcButtons();
-    updateCalcDisplay();
+    updateDisplay();
 
-    // ========== 聊天模块 - 修复滚动重置 & 日期显示，且初始不弹登录 ==========
-    const calculatorUI = document.getElementById('calculatorUI');
+    // ---------- 聊天模块（含日期显示 & 滚动保持）----------
     const chatPanel = document.getElementById('chatPanel');
     const loginOverlay = document.getElementById('loginOverlay');
     const messagesArea = document.getElementById('messagesArea');
@@ -531,54 +522,121 @@
     const loginError = document.getElementById('loginError');
 
     let authActive = false;
-    let myRole = '0213';
     let refreshTimer = null;
     let heartbeatTimer = null;
-
-    // 滚动行为控制
     let autoScrollEnabled = true;
     let scrollDebounce = null;
 
-    function handleScroll() {
-      if (!messagesArea) return;
-      if (scrollDebounce) clearTimeout(scrollDebounce);
-      scrollDebounce = setTimeout(() => {
-        const scrollTop = messagesArea.scrollTop;
-        const scrollHeight = messagesArea.scrollHeight;
-        const clientHeight = messagesArea.clientHeight;
-        const isNearBottom = scrollHeight - (scrollTop + clientHeight) < 30;
-        autoScrollEnabled = isNearBottom;
-      }, 120);
+    // 日期时间格式化（保证显示）
+    function formatDateDivider(isoString) {
+      if (!isoString) return '';
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '';
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      return `${year}年${month}月${day}日 ${weekdays[d.getDay()]}`;
     }
 
-    messagesArea.addEventListener('scroll', handleScroll, { passive: true });
+    function formatTimeOnly(isoString) {
+      if (!isoString) return '';
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '';
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    }
+
+    function isSameDay(t1, t2) {
+      if (!t1 || !t2) return true;
+      const d1 = new Date(t1), d2 = new Date(t2);
+      return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+    }
+
+    // 滚动监听
+    messagesArea.addEventListener('scroll', () => {
+      if (scrollDebounce) clearTimeout(scrollDebounce);
+      scrollDebounce = setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = messagesArea;
+        autoScrollEnabled = (scrollHeight - (scrollTop + clientHeight)) < 30;
+      }, 120);
+    });
 
     function scrollToBottom() {
-      if (!messagesArea) return;
       messagesArea.scrollTop = messagesArea.scrollHeight;
       autoScrollEnabled = true;
     }
 
-    // 显示登录面板（长按时调用）
-    function showLogin() {
-      loginOverlay.classList.remove('hidden');
-      chatPanel.style.display = 'none';
-      passwordInput.value = '';
-      loginError.textContent = '';
+    async function loadMessages() {
+      if (!authActive) return;
+      try {
+        const resp = await fetch('/messages');
+        if (resp.status === 401) { logout(); return; }
+        const msgs = await resp.json();
+        if (!msgs.length) {
+          messagesArea.innerHTML = '<div style="text-align:center;color:#94a3b8;margin-top:30px;">💬 还没有消息，发一条吧</div>';
+          return;
+        }
+
+        let html = '';
+        let lastDate = null;
+        for (let m of msgs) {
+          const rawTime = m.time || m.created_at;
+          if (rawTime && !isSameDay(lastDate, rawTime)) {
+            html += `<div class="time-divider"><span>${formatDateDivider(rawTime)}</span></div>`;
+          }
+          lastDate = rawTime;
+
+          const senderName = (m.sender === '0213' || m.sender === 'boy') ? '0213' : '开心';
+          const bubbleClass = (m.sender === '0213' || m.sender === 'boy') ? 'msg-0213' : 'msg-开心';
+          const timeStr = formatTimeOnly(rawTime);
+          html += `<div class="message-bubble ${bubbleClass}">
+            <div class="msg-sender">${senderName}</div>
+            <div>${escapeHtml(m.text)}</div>
+            <div class="msg-time">${timeStr}</div>
+          </div>`;
+        }
+        
+        const wasAuto = autoScrollEnabled;
+        const oldScrollHeight = messagesArea.scrollHeight;
+        const oldScrollTop = messagesArea.scrollTop;
+        messagesArea.innerHTML = html;
+        if (wasAuto) {
+          scrollToBottom();
+        } else {
+          const newScrollHeight = messagesArea.scrollHeight;
+          messagesArea.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+        }
+      } catch(e) { console.warn(e); }
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !authActive) return;
+      try {
+        const resp = await fetch('/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        if (resp.status === 401) { logout(); return; }
+        messageInput.value = '';
+        autoScrollEnabled = true;
+        await loadMessages();
+        scrollToBottom();
+      } catch(e) { alert('发送失败'); }
     }
 
     function openChat() {
       loginOverlay.classList.add('hidden');
       chatPanel.style.display = 'flex';
-      autoScrollEnabled = true;
-      loadMessages().then(() => {
-        scrollToBottom();
-      });
+      loadMessages().then(() => scrollToBottom());
       if (refreshTimer) clearInterval(refreshTimer);
       refreshTimer = setInterval(() => {
-        if (authActive && chatPanel.style.display === 'flex') {
-          loadMessages().catch(e => console.log(e));
-        }
+        if (authActive && chatPanel.style.display === 'flex') loadMessages();
       }, 4000);
       startHeartbeat();
     }
@@ -592,156 +650,8 @@
     function logout() {
       authActive = false;
       closeChat();
-      // 不自动弹出登录，而是隐藏聊天、保留计算器
       loginOverlay.classList.add('hidden');
-      if (refreshTimer) clearInterval(refreshTimer);
-      if (heartbeatTimer) clearInterval(heartbeatTimer);
     }
-
-    // 日期与时间格式化
-    function formatDateOnly(dateStr) {
-      if (!dateStr) return '';
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '';
-      const year = d.getFullYear();
-      const month = d.getMonth() + 1;
-      const day = d.getDate();
-      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-      const weekday = weekdays[d.getDay()];
-      return `${year}年${month}月${day}日 ${weekday}`;
-    }
-
-    function formatMessageTime(dateStr) {
-      if (!dateStr) return '';
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '';
-      const hours = String(d.getHours()).padStart(2,'0');
-      const minutes = String(d.getMinutes()).padStart(2,'0');
-      const seconds = String(d.getSeconds()).padStart(2,'0');
-      return `${hours}:${minutes}:${seconds}`;
-    }
-
-    function isSameDay(date1, date2) {
-      if (!date1 || !date2) return true;
-      const d1 = new Date(date1);
-      const d2 = new Date(date2);
-      return d1.getFullYear() === d2.getFullYear() &&
-             d1.getMonth() === d2.getMonth() &&
-             d1.getDate() === d2.getDate();
-    }
-
-    function escapeHtml(text) {
-      return String(text).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
-    }
-
-    let isLoadingMessages = false;
-    async function loadMessages() {
-      if (!authActive) return;
-      if (isLoadingMessages) return;
-      isLoadingMessages = true;
-
-      const prevScrollTop = messagesArea.scrollTop;
-      const prevScrollHeight = messagesArea.scrollHeight;
-      const wasAutoScroll = autoScrollEnabled;
-
-      try {
-        const resp = await fetch('/messages');
-        if (resp.status === 401) { logout(); isLoadingMessages = false; return; }
-        const msgs = await resp.json();
-        if (!msgs || msgs.length === 0) {
-          messagesArea.innerHTML = '<div style="text-align:center;color:#94a3b8;margin-top:30px;">💬 还没有消息，发一条吧</div>';
-          isLoadingMessages = false;
-          return;
-        }
-
-        let html = '';
-        let lastDate = null;
-        msgs.forEach((m) => {
-          const msgTimeRaw = m.time || m.created_at || null;
-          if (msgTimeRaw && !isSameDay(lastDate, msgTimeRaw)) {
-            const dateTitle = formatDateOnly(msgTimeRaw);
-            html += `<div class="time-divider"><span>${dateTitle}</span></div>`;
-          }
-          lastDate = msgTimeRaw;
-
-          const senderName = (m.sender === '0213' || m.sender === 'boy') ? '0213' : '开心';
-          const cls = (m.sender === '0213' || m.sender === 'boy') ? 'msg-0213' : 'msg-开心';
-          const displayTime = formatMessageTime(msgTimeRaw);
-          html += `<div class="message-bubble ${cls}">
-            <div class="msg-sender">${senderName}</div>
-            <div>${escapeHtml(m.text)}</div>
-            <div class="msg-time">${displayTime}</div>
-          </div>`;
-        });
-
-        messagesArea.innerHTML = html;
-
-        if (wasAutoScroll) {
-          scrollToBottom();
-        } else {
-          const newScrollHeight = messagesArea.scrollHeight;
-          const heightDiff = newScrollHeight - prevScrollHeight;
-          if (heightDiff > 0) {
-            messagesArea.scrollTop = prevScrollTop + heightDiff;
-          } else {
-            messagesArea.scrollTop = prevScrollTop;
-          }
-          if (messagesArea.scrollTop < 0) messagesArea.scrollTop = 0;
-        }
-      } catch (e) {
-        console.warn('加载消息失败', e);
-      } finally {
-        isLoadingMessages = false;
-      }
-    }
-
-    loginSubmit.addEventListener('click', async () => {
-      const pwd = passwordInput.value.trim();
-      if (!pwd) { loginError.textContent = '请输入密码'; return; }
-      loginError.textContent = '验证中...';
-      try {
-        const resp = await fetch('/auth', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ password: pwd })
-        });
-        const data = await resp.json();
-        if (resp.ok && data.status === 'ok') {
-          authActive = true;
-          myRole = data.role === 'boy' ? '0213' : (data.role === 'girl' ? '开心' : '0213');
-          openChat();
-        } else {
-          loginError.textContent = '密码错误';
-        }
-      } catch (err) {
-        loginError.textContent = '网络异常';
-      }
-    });
-
-    async function sendMessage() {
-      const text = messageInput.value.trim();
-      if (!text || !authActive) return;
-      try {
-        const resp = await fetch('/messages', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ text: text })
-        });
-        if (resp.status === 401) { logout(); return; }
-        messageInput.value = '';
-        autoScrollEnabled = true;
-        await loadMessages();
-        scrollToBottom();
-      } catch (e) {
-        alert('发送失败');
-      }
-    }
-
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-    closeChatBtn.addEventListener('click', closeChat);
 
     function startHeartbeat() {
       if (heartbeatTimer) clearInterval(heartbeatTimer);
@@ -755,11 +665,38 @@
       }, 15000);
     }
 
-    // 长按触发登录/聊天（伪装计算器长按）
-    let pressTimer = null;
-    function startLongPress(e) {
+    // 登录逻辑
+    loginSubmit.addEventListener('click', async () => {
+      const pwd = passwordInput.value.trim();
+      if (!pwd) { loginError.textContent = '请输入密码'; return; }
+      loginError.textContent = '验证中...';
+      try {
+        const resp = await fetch('/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.status === 'ok') {
+          authActive = true;
+          openChat();
+        } else {
+          loginError.textContent = '密码错误';
+        }
+      } catch(err) {
+        loginError.textContent = '网络异常';
+      }
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    closeChatBtn.addEventListener('click', closeChat);
+
+    // 长按计算器区域触发
+    let longPressTimer = null;
+    function onLongPressStart(e) {
       if (e.target.closest('.calc-btn') || e.target.closest('.calc-display') || e.target.closest('.calculator-fullscreen') || e.target.closest('.secret-hint')) {
-        pressTimer = setTimeout(() => {
+        longPressTimer = setTimeout(() => {
           if (authActive) {
             if (chatPanel.style.display !== 'flex') {
               chatPanel.style.display = 'flex';
@@ -771,22 +708,23 @@
               }
             }
           } else {
-            showLogin();  // 未登录则弹出验证框
+            loginOverlay.classList.remove('hidden');
           }
         }, 600);
       }
     }
     function cancelLongPress() {
-      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
     }
 
-    calculatorUI.addEventListener('touchstart', startLongPress, {passive: false});
-    calculatorUI.addEventListener('touchend', cancelLongPress);
-    calculatorUI.addEventListener('touchmove', cancelLongPress);
-    calculatorUI.addEventListener('mousedown', startLongPress);
+    const calcUI = document.getElementById('calculatorUI');
+    calcUI.addEventListener('touchstart', onLongPressStart, { passive: false });
+    calcUI.addEventListener('touchend', cancelLongPress);
+    calcUI.addEventListener('touchmove', cancelLongPress);
+    calcUI.addEventListener('mousedown', onLongPressStart);
     window.addEventListener('mouseup', cancelLongPress);
 
-    // 初始状态：登录遮罩隐藏，只显示计算器
+    // 初始状态：只显示计算器，登录遮罩隐藏
     loginOverlay.classList.add('hidden');
     chatPanel.style.display = 'none';
   })();
