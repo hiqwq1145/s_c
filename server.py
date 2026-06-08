@@ -106,9 +106,10 @@ def handle_messages():
         if msg:
             conn = get_db()
             cur = conn.cursor()
+            from datetime import datetime, timezone
             cur.execute(
                 "INSERT INTO messages (text, sender, time) VALUES (%s, %s, %s)",
-                (msg, session['role'], datetime.now().strftime('%H:%M:%S'))
+                (msg, session['role'], datetime.now(timezone.utc).isoformat())
             )
             conn.commit()
             cur.close()
