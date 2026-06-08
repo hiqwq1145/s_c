@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, session
 import time
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import psycopg2
 from psycopg2.extras import DictCursor
@@ -98,7 +98,24 @@ def handle_messages():
         rows = cur.fetchall()
         cur.close()
         conn.close()
-        messages = [{'text': r['text'], 'sender': r['sender'], 'time': r['time']} for r in rows]
+        
+        messages = []
+        for r in rows:
+            # 优先使用完整时间：如果 time 字段已经是 ISO 格式（包含日期），则用它，否则用 created_at
+            time_raw = r['time']
+            created_at = r['created_at']
+            # 判断 time_raw 是否为完整日期时间（至少包含 YYYY-MM-DD 格式）
+            if time_raw and len(time_raw) >= 10 and '-' in time_raw:
+                full_time = time_raw
+            else:
+                # 使用 created_at 并转为 ISO 字符串
+                full_time = created_at.isoformat() if created_at else datetime.now(timezone.utc).isoformat()
+            
+            messages.append({
+                'text': r['text'],
+                'sender': r['sender'],
+                'full_time': full_time
+            })
         return jsonify(messages)
     
     elif request.method == 'POST':
@@ -106,10 +123,11 @@ def handle_messages():
         if msg:
             conn = get_db()
             cur = conn.cursor()
-            from datetime import datetime, timezone
+            # 存储完整 ISO 时间字符串
+            now_iso = datetime.now(timezone.utc).isoformat()
             cur.execute(
                 "INSERT INTO messages (text, sender, time) VALUES (%s, %s, %s)",
-                (msg, session['role'], datetime.now(timezone.utc).isoformat())
+                (msg, session['role'], now_iso)
             )
             conn.commit()
             cur.close()
